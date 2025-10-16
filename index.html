@@ -93,9 +93,6 @@ let baikalTemplateFile = null;
 let fortunaTemplateFile = null;
 let excelTemplateFile = null;
 
-// ПУТЬ К ВАШЕМУ РЕПОЗИТОРИЮ. 
-const GITHUB_REPO_PATH = 'OriginalDVS/originaldvs.github.io/main';
-
 // --- TEMPLATE DATA ---
 const baikalTemplateData = [
     {"id":"b_doc_num",   "top":"6.36%", "left":"68.00%","width":"11.00%","fontSize":"11.5pt","fontWeight":"bold"},
@@ -131,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         document.getElementById('loading-text').textContent = 'Ошибка загрузки шаблонов!';
         console.error(error);
-        alert('Не удалось загрузить шаблоны. Проверьте путь к репозиторию в коде и наличие файлов.');
+        alert('Не удалось загрузить шаблоны. Проверьте консоль (F12) для подробностей и убедитесь, что файлы есть в репозитории.');
     } finally {
         hideLoading();
     }
@@ -149,6 +146,10 @@ function populateRenderContainer(containerId, data) {
         field.style.fontSize = item.fontSize;
         field.style.fontWeight = item.fontWeight || 'normal';
         field.style.textAlign = item.align || 'left';
+        // Для Байкала нужен другой шрифт, применяем его отдельно
+        if (containerId === 'baikal-container') {
+            field.style.fontFamily = "'Times New Roman', Times, serif";
+        }
         container.appendChild(field);
     });
 }
@@ -159,8 +160,8 @@ function setupNavigation() {
     document.getElementById('back-to-selection').addEventListener('click', showSelectionScreen);
 }
 
-// --- FILE HANDLING ---
-async function loadFile(url, type) {
+// --- FILE HANDLING (Simple relative path method) ---
+async function loadFile(url, type, elementId) {
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Ошибка загрузки ${url}: ${response.statusText}`);
@@ -168,26 +169,19 @@ async function loadFile(url, type) {
     
     if (type === 'image') {
         const blob = await response.blob();
-        return URL.createObjectURL(blob);
-    } else {
+        document.getElementById(elementId).src = URL.createObjectURL(blob);
+    } else { // excel
         return await response.arrayBuffer();
     }
 }
 
 async function loadAllTemplates() {
-    const baseUrl = `https://raw.githubusercontent.com/${GITHUB_REPO_PATH}/`;
-    
-    const [baikalImg, fortunaImg, excelFile] = await Promise.all([
-        loadFile(baseUrl + 'baikal.jpg', 'image'),
-        loadFile(baseUrl + 'fortuna.jpg', 'image'),
-        loadFile(baseUrl + 'baikal_rashod.xlsx', 'excel')
+    // Загружаем файлы по простому относительному пути
+    await Promise.all([
+        loadFile('baikal.jpg', 'image', 'baikal-background-image'),
+        loadFile('fortuna.jpg', 'image', 'fortuna-background-image')
     ]);
-
-    baikalTemplateFile = baikalImg;
-    document.getElementById('baikal-background-image').src = baikalTemplateFile;
-    fortunaTemplateFile = fortunaImg;
-    document.getElementById('fortuna-background-image').src = fortunaTemplateFile;
-    excelTemplateFile = excelFile;
+    excelTemplateFile = await loadFile('baikal_rashod.xlsx', 'excel');
 }
 
 
