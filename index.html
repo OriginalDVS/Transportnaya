@@ -64,7 +64,7 @@
                 </div>
                 <div id="select-fortuna" class="bg-purple-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-purple-600 transition-colors">
                     <h3 class="text-2xl font-bold">Фортуна</h3>
-                    <p class="mt-2">Создать накладную</p>
+                    <p class="mt-2">Создать акт выдачи</p>
                 </div>
             </div>
         </div>
@@ -93,8 +93,8 @@ let baikalTemplateFile = null;
 let fortunaTemplateFile = null;
 let excelTemplateFile = null;
 
-// !!! ВАЖНО: УКАЖИТЕ ПРАВИЛЬНЫЙ ПУТЬ К ВАШЕМУ РЕПОЗИТОРИЮ GITHUB !!!
-const GITHUB_REPO_PATH = 'ВАШ_ЛОГИН/НАЗВАНИЕ_РЕПОЗИТОРИЯ/main'; // Например, 'IvanovIvan/docs-generator/main'
+// ПУТЬ К ВАШЕМУ РЕПОЗИТОРИЮ. 
+const GITHUB_REPO_PATH = 'OriginalDVS/originaldvs.github.io/main';
 
 // --- TEMPLATE DATA ---
 const baikalTemplateData = [
@@ -228,7 +228,7 @@ function showFormScreen(type) {
         </div>`;
     } else if (type === 'fortuna') {
         formTitle = 'Данные для "Фортуна"';
-        buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Скачать Накладную (PDF)</button>`;
+        buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Скачать Акт выдачи (PDF)</button>`;
     }
 
     document.getElementById('form-title').innerText = formTitle;
@@ -249,10 +249,10 @@ function showFormScreen(type) {
 function createFileName() {
     const dateValue = document.getElementById('input_date').value;
     const datePart = dateValue ? dateValue.split('-').reverse().join('.') : '';
-    const cityPart = document.getElementById('input_city').value || 'Город';
+    const cityPart = document.getElementById('input_city').value;
     const enginePart = document.getElementById('input_engine_model').value;
     const fullName = document.getElementById('input_recipient_name').value;
-    const lastNamePart = fullName ? fullName.split(' ')[0] : 'Фамилия';
+    const lastNamePart = fullName ? fullName.split(' ')[0] : '';
 
     return [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ');
 }
@@ -286,7 +286,7 @@ async function generateBaikalPdf() {
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
         pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
-        pdf.save(createFileName() + ' (Доверенность).pdf');
+        pdf.save(createFileName() + '.pdf');
     } catch (error) {
         alert("Ошибка при создании PDF: " + error.message);
     } finally {
@@ -320,7 +320,7 @@ async function generateFortunaPdf() {
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
         pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
-        pdf.save(createFileName() + ' (Накладная).pdf');
+        pdf.save(createFileName() + '.pdf');
     } catch (error) {
         alert("Ошибка при создании PDF: " + error.message);
     } finally {
@@ -344,7 +344,7 @@ async function generateExcel() {
             worksheet.getCell('F7').value = price;
         }
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), createFileName() + ' (Расход).xlsx');
+        saveAs(new Blob([buffer]), createFileName() + '.xlsx');
     } catch (error) {
         alert("Ошибка при создании Excel файла: " + error.message);
     } finally {
@@ -354,11 +354,14 @@ async function generateExcel() {
 
 // --- LOADING OVERLAY ---
 function showLoading(message) {
-    document.getElementById('loading-text').textContent = message;
-    document.getElementById('loading-overlay').classList.remove('hidden');
+    const loadingText = document.getElementById('loading-text');
+    if (loadingText) loadingText.textContent = message;
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.remove('hidden');
 }
 function hideLoading() {
-    document.getElementById('loading-overlay').classList.add('hidden');
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('hidden');
 }
 </script>
 
