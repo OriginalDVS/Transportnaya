@@ -220,12 +220,17 @@ function createFileName() {
     return [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ') + '.pdf';
 }
 
+// --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
 async function generatePdfFor(containerId) {
     const container = document.getElementById(containerId);
-    if (!container.querySelector('.background-image').src.startsWith('blob:')) {
-        alert("Шаблон для этого документа не загружен. Убедитесь, что файл " + containerId.replace('-container','.jpg') + " находится в папке проекта и обновите страницу.");
+    const image = container.querySelector('.background-image');
+
+    // Проверяем, есть ли у картинки источник и реальная ширина (т.е. она загружена)
+    if (!image.src || image.naturalWidth === 0) {
+        alert("Шаблон для этого документа не загружен. Убедитесь, что файл " + containerId.replace('-container','.jpg') + " есть в репозитории и обновите страницу.");
         return;
     }
+
     showLoading('Подготовка PDF...');
     try {
         await new Promise(r => setTimeout(r, 100));
