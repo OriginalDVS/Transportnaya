@@ -156,10 +156,9 @@ function showFormScreen(type) {
         buttonsHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button id="generate-baikal-pdf" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700">Скачать Доверенность (PDF)</button><button id="generate-excel" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700">Скачать Расход (Excel)</button></div>`;
     } else if (type === 'fortuna') {
         formTitle = 'Данные для "Фортуна"';
-        buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Скачать Акт выдачи (PDF)</button>`;
+        buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Создать акт выдачи</button>`;
     } else if (type === 'atek') {
         formTitle = 'Данные для "АТЭК"';
-        // Убираем поля "Город" и "Цена" из формы для АТЭК, т.к. они не используются в шаблоне
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю030"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
@@ -186,11 +185,11 @@ function showFormScreen(type) {
 // --- FILE HANDLING ---
 async function loadAllTemplates() {
     await Promise.all([
-        loadFile('baikal.jpg', 'image', 'baikal-background-image'),
-        loadFile('fortuna.jpg', 'image', 'fortuna-background-image'),
-        loadFile('atek.jpg', 'image', 'atek-background-image')
+        loadFile('./baikal.jpg', 'image', 'baikal-background-image'),
+        loadFile('./fortuna.jpg', 'image', 'fortuna-background-image'),
+        loadFile('./atek.jpg', 'image', 'atek-background-image')
     ]);
-    excelTemplateFile = await loadFile('baikal_rashod.xlsx', 'excel');
+    excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
 }
 
 async function loadFile(url, type, elementId) {
@@ -207,10 +206,6 @@ async function loadFile(url, type, elementId) {
         }
     } catch (e) {
         console.error(e);
-        // Не показываем alert для atek.jpg, если его нет
-        if (!url.includes('atek.jpg')) {
-            alert(`Не удалось загрузить файл ${url}. Проверьте, что он находится в той же папке, что и index.html`);
-        }
     }
 }
 
@@ -218,7 +213,7 @@ async function loadFile(url, type, elementId) {
 function createFileName() {
     const dateValue = document.getElementById('input_date').value;
     const datePart = dateValue ? dateValue.split('-').reverse().join('.') : '';
-    const cityPart = document.getElementById('input_city')?.value || ''; // Безопасно получаем город
+    const cityPart = document.getElementById('input_city')?.value || '';
     const enginePart = document.getElementById('input_engine_model')?.value || '';
     const fullName = document.getElementById('input_recipient_name').value;
     const lastNamePart = fullName ? fullName.split(' ')[0] : '';
@@ -227,8 +222,8 @@ function createFileName() {
 
 async function generatePdfFor(containerId) {
     const container = document.getElementById(containerId);
-    if (!container.querySelector('.background-image').src) {
-        alert("Шаблон для этого документа не загружен. Убедитесь, что файл .jpg находится в папке проекта.");
+    if (!container.querySelector('.background-image').src.startsWith('blob:')) {
+        alert("Шаблон для этого документа не загружен. Убедитесь, что файл " + containerId.replace('-container','.jpg') + " находится в папке проекта и обновите страницу.");
         return;
     }
     showLoading('Подготовка PDF...');
@@ -253,8 +248,38 @@ const generateFortunaPdf = () => { updateFortunaDocument(); generatePdfFor('fort
 const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-container'); };
 
 // --- Document Update Functions ---
-function updateBaikalDocument() { /* ... unchanged ... */ }
-function updateFortunaDocument() { /* ... unchanged ... */ }
+function updateBaikalDocument() {
+    document.getElementById('b_doc_num').innerText = document.getElementById('input_doc_num').value;
+    document.getElementById('b_fio').innerText = document.getElementById('input_recipient_name').value;
+    document.getElementById('b_passport').innerText = document.getElementById('input_recipient_id').value || '';
+    const dateValue = document.getElementById('input_date').value;
+    if (dateValue) {
+        const d = new Date(dateValue);
+        const months = ["Января","Февраля","Марта","Апреля","Мая","Июня","Июля","Августа","Сентября","Октября","Ноября","Декабря"];
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = months[d.getMonth()];
+        const year = String(d.getFullYear()).slice(2);
+        ['b_issue_day', 'b_exp_day'].forEach(id => document.getElementById(id).innerText = day);
+        ['b_issue_month', 'b_exp_month'].forEach(id => document.getElementById(id).innerText = month);
+        ['b_issue_year', 'b_exp_year'].forEach(id => document.getElementById(id).innerText = year);
+    }
+}
+function updateFortunaDocument() {
+    const dateValue = document.getElementById('input_date').value;
+    const formattedDate = dateValue ? dateValue.split('-').reverse().join('.') : '';
+    const price = parseFloat(document.getElementById('input_amount').value);
+    const formattedPrice = !isNaN(price) ? price.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00';
+    
+    document.getElementById('f_city').innerText = document.getElementById('input_city').value;
+    document.getElementById('f_fio').innerText = document.getElementById('input_recipient_name').value;
+    document.getElementById('f_doc_num').innerText = document.getElementById('input_doc_num').value;
+    document.getElementById('f_date').innerText = formattedDate;
+    document.getElementById('f_engine').innerText = document.getElementById('input_engine_model').value;
+    ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerText = formattedPrice;
+    });
+}
 
 function updateAtekDocument() {
     const fio = document.getElementById('input_recipient_name').value;
@@ -290,9 +315,35 @@ function populateRenderContainer(containerId, data) {
     });
 }
 
-async function generateExcel() { /* ... unchanged ... */ }
-function showLoading(message) { /* ... unchanged ... */ }
-function hideLoading() { /* ... unchanged ... */ }
+async function generateExcel() {
+    showLoading('Подготовка Excel...');
+    try {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(excelTemplateFile);
+        const worksheet = workbook.getWorksheet(1);
+        const dateValue = document.getElementById('input_date').value;
+        worksheet.getCell('B2').value = dateValue ? dateValue.split('-').reverse().join('.') : '';
+        worksheet.getCell('A7').value = document.getElementById('input_engine_model').value;
+        const price = parseFloat(document.getElementById('input_amount').value);
+        if (!isNaN(price)) {
+            worksheet.getCell('E7').value = price;
+            worksheet.getCell('F7').value = price;
+        }
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), createFileName().replace('.pdf','.xlsx'));
+    } catch (error) {
+        alert("Ошибка при создании Excel файла: " + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+function showLoading(message) {
+    document.getElementById('loading-text').textContent = message || 'Загрузка...';
+    document.getElementById('loading-overlay').classList.remove('hidden');
+}
+function hideLoading() {
+    document.getElementById('loading-overlay').classList.add('hidden');
+}
 </script>
 
 </body>
