@@ -85,17 +85,92 @@ const baikalTemplateData = [
     {"id":"b_issue_month","top":"12.10%","left":"74.13%","width":"13.00%","fontSize":"12pt"},
     {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
 ];
+
+// --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
 const fortunaTemplateData = [
-    {"id":"f_fio", "top":"16.17%", "left":"7.25%", "width":"34.38%", "fontSize":"7.8pt", "fontWeight":"normal", "align":"center"},
-    {"id":"f_doc_num", "top":"24.82%", "left":"46.75%", "width":"14.00%", "fontSize":"8pt", "fontWeight":"normal", "align":"center"},
-    {"id":"f_date", "top":"24.83%", "left":"60.50%", "width":"13.25%", "fontSize":"8pt", "fontWeight":"normal", "align":"center"},
-    {"id":"f_engine", "top":"37.19%", "left":"10.25%", "width":"11.88%", "fontSize":"6pt", "fontWeight":"normal", "align":"left"},
-    {"id":"f_price1", "top":"37.19%", "left":"53.75%", "width":"6.88%", "fontSize":"6pt", "fontWeight":"normal", "align":"right"},
-    {"id":"f_price2", "top":"37.19%", "left":"60.50%", "width":"7.12%", "fontSize":"6pt", "fontWeight":"normal", "align":"right"},
-    {"id":"f_total1", "top":"42.67%", "left":"60.50%", "width":"7.12%", "fontSize":"6pt", "fontWeight":"normal", "align":"right"},
-    {"id":"f_total2", "top":"43.73%", "left":"60.50%", "width":"7.12%", "fontSize":"6pt", "fontWeight":"normal", "align":"right"},
-    {"id":"f_city", "top":"10.80%", "left":"7.00%", "width":"14.00%", "fontSize":"8pt", "fontWeight":"normal", "align":"left"}
+    {
+        "id": "f_fio",
+        "top": "16.17%",
+        "left": "7.25%",
+        "width": "34.38%",
+        "fontSize": "7.8pt",
+        "fontWeight": "normal",
+        "align": "center"
+    },
+    {
+        "id": "f_doc_num",
+        "top": "24.82%",
+        "left": "46.75%",
+        "width": "14.00%",
+        "fontSize": "8pt",
+        "fontWeight": "normal",
+        "align": "center"
+    },
+    {
+        "id": "f_date",
+        "top": "24.83%",
+        "left": "60.50%",
+        "width": "13.25%",
+        "fontSize": "8pt",
+        "fontWeight": "normal",
+        "align": "center"
+    },
+    {
+        "id": "f_engine",
+        "top": "37.19%",
+        "left": "10.25%",
+        "width": "11.88%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "left"
+    },
+    {
+        "id": "f_price1",
+        "top": "37.19%",
+        "left": "53.75%",
+        "width": "6.88%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_price2",
+        "top": "37.19%",
+        "left": "60.50%",
+        "width": "7.12%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_total1",
+        "top": "42.67%",
+        "left": "60.50%",
+        "width": "7.12%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_total2",
+        "top": "43.73%",
+        "left": "60.50%",
+        "width": "7.12%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_city",
+        "top": "10.80%",
+        "left": "7.00%",
+        "width": "14.00%",
+        "fontSize": "8pt",
+        "fontWeight": "normal",
+        "align": "left"
+    }
 ];
+
 const atekTemplateData = [
     { "id": "a_fio", "top": "21.82%", "left": "30.80%", "width": "51.00%", "fontSize": "12pt", "align": "left", "fontWeight": "normal" },
     { "id": "a_shapka", "top": "9.75%", "left": "13.3%", "width": "68.38%", "fontSize": "12pt", "align": "left", "fontWeight": "bold" },
@@ -199,157 +274,4 @@ async function loadFile(url, type, elementId) {
         
         if (type === 'image') {
             const blob = await response.blob();
-            const el = document.getElementById(elementId);
-            if(el) el.src = URL.createObjectURL(blob);
-        } else {
-            return await response.arrayBuffer();
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-// --- DOCUMENT GENERATION ---
-function createFileName() {
-    const dateValue = document.getElementById('input_date').value;
-    const datePart = dateValue ? dateValue.split('-').reverse().join('.') : '';
-    const cityPart = document.getElementById('input_city')?.value || '';
-    const enginePart = document.getElementById('input_engine_model')?.value || '';
-    const fullName = document.getElementById('input_recipient_name').value;
-    const lastNamePart = fullName ? fullName.split(' ')[0] : '';
-    return [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ') + '.pdf';
-}
-
-// --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
-async function generatePdfFor(containerId) {
-    const container = document.getElementById(containerId);
-    const image = container.querySelector('.background-image');
-
-    // Проверяем, есть ли у картинки источник и реальная ширина (т.е. она загружена)
-    if (!image.src || image.naturalWidth === 0) {
-        alert("Шаблон для этого документа не загружен. Убедитесь, что файл " + containerId.replace('-container','.jpg') + " есть в репозитории и обновите страницу.");
-        return;
-    }
-
-    showLoading('Подготовка PDF...');
-    try {
-        await new Promise(r => setTimeout(r, 100));
-        const canvas = await html2canvas(container, { scale: 3, useCORS: true });
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
-        pdf.save(createFileName());
-    } catch (error) {
-        alert("Ошибка при создании PDF: " + error.message);
-        console.error("PDF Generation Error:", error);
-    } finally {
-        hideLoading();
-    }
-}
-
-// --- Specific Generation Functions ---
-const generateBaikalPdf = () => { updateBaikalDocument(); generatePdfFor('baikal-container'); };
-const generateFortunaPdf = () => { updateFortunaDocument(); generatePdfFor('fortuna-container'); };
-const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-container'); };
-
-// --- Document Update Functions ---
-function updateBaikalDocument() {
-    document.getElementById('b_doc_num').innerText = document.getElementById('input_doc_num').value;
-    document.getElementById('b_fio').innerText = document.getElementById('input_recipient_name').value;
-    document.getElementById('b_passport').innerText = document.getElementById('input_recipient_id').value || '';
-    const dateValue = document.getElementById('input_date').value;
-    if (dateValue) {
-        const d = new Date(dateValue);
-        const months = ["Января","Февраля","Марта","Апреля","Мая","Июня","Июля","Августа","Сентября","Октября","Ноября","Декабря"];
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = months[d.getMonth()];
-        const year = String(d.getFullYear()).slice(2);
-        ['b_issue_day', 'b_exp_day'].forEach(id => document.getElementById(id).innerText = day);
-        ['b_issue_month', 'b_exp_month'].forEach(id => document.getElementById(id).innerText = month);
-        ['b_issue_year', 'b_exp_year'].forEach(id => document.getElementById(id).innerText = year);
-    }
-}
-function updateFortunaDocument() {
-    const dateValue = document.getElementById('input_date').value;
-    const formattedDate = dateValue ? dateValue.split('-').reverse().join('.') : '';
-    const price = parseFloat(document.getElementById('input_amount').value);
-    const formattedPrice = !isNaN(price) ? price.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00';
-    
-    document.getElementById('f_city').innerText = document.getElementById('input_city').value;
-    document.getElementById('f_fio').innerText = document.getElementById('input_recipient_name').value;
-    document.getElementById('f_doc_num').innerText = document.getElementById('input_doc_num').value;
-    document.getElementById('f_date').innerText = formattedDate;
-    document.getElementById('f_engine').innerText = document.getElementById('input_engine_model').value;
-    ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.innerText = formattedPrice;
-    });
-}
-
-function updateAtekDocument() {
-    const fio = document.getElementById('input_recipient_name').value;
-    const dvs = document.getElementById('input_engine_model').value;
-    
-    document.getElementById('a_fio').textContent = fio;
-    document.getElementById('a_dvs').textContent = dvs;
-
-    const date = new Date(document.getElementById('input_date').value || new Date());
-    const day = date.getDate().toString();
-    const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    const month = genitiveMonths[date.getMonth()];
-    const year = date.getFullYear();
-    const docNum = document.getElementById('input_doc_num').value;
-    
-    document.getElementById('a_shapka').innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
-}
-
-// --- Helper Functions ---
-function populateRenderContainer(containerId, data) {
-    const container = document.getElementById(containerId);
-    data.forEach(item => {
-        const field = document.createElement('div');
-        field.id = item.id;
-        field.className = 'data-field';
-        field.style.top = item.top;
-        field.style.left = item.left;
-        field.style.width = item.width;
-        field.style.fontSize = item.fontSize;
-        field.style.fontWeight = item.fontWeight;
-        field.style.textAlign = item.align;
-        container.appendChild(field);
-    });
-}
-
-async function generateExcel() {
-    showLoading('Подготовка Excel...');
-    try {
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(excelTemplateFile);
-        const worksheet = workbook.getWorksheet(1);
-        const dateValue = document.getElementById('input_date').value;
-        worksheet.getCell('B2').value = dateValue ? dateValue.split('-').reverse().join('.') : '';
-        worksheet.getCell('A7').value = document.getElementById('input_engine_model').value;
-        const price = parseFloat(document.getElementById('input_amount').value);
-        if (!isNaN(price)) {
-            worksheet.getCell('E7').value = price;
-            worksheet.getCell('F7').value = price;
-        }
-        const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), createFileName().replace('.pdf','.xlsx'));
-    } catch (error) {
-        alert("Ошибка при создании Excel файла: " + error.message);
-    } finally {
-        hideLoading();
-    }
-}
-function showLoading(message) {
-    document.getElementById('loading-text').textContent = message || 'Загрузка...';
-    document.getElementById('loading-overlay').classList.remove('hidden');
-}
-function hideLoading() {
-    document.getElementById('loading-overlay').classList.add('hidden');
-}
-</script>
-
-</body>
-</html>
+            const el = document.getElementById
