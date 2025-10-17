@@ -95,26 +95,100 @@ let excelTemplateFile = null;
 
 // --- TEMPLATE DATA ---
 const baikalTemplateData = [
-    {"id":"b_doc_num",   "top":"6.36%", "left":"68.00%","width":"11.00%","fontSize":"11.5pt","fontWeight":"bold"},
-    {"id":"b_fio",       "top":"38.42%","left":"10.25%","width":"82.50%","fontSize":"11.5pt","fontWeight":"bold"},
-    {"id":"b_passport",  "top":"43.89%","left":"10.25%","width":"82.50%","fontSize":"11.5pt","fontWeight":"bold"},
-    {"id":"b_exp_day",   "top":"65.18%","left":"53.00%","width":"4.00%", "fontSize":"12pt"},
-    {"id":"b_exp_month", "top":"65.09%","left":"58.88%","width":"19.00%","fontSize":"12pt"},
-    {"id":"b_exp_year",  "top":"65.11%","left":"79.13%","width":"4.50%", "fontSize":"13pt"},
-    {"id":"b_issue_day", "top":"12.19%","left":"68.63%","width":"4.00%", "fontSize":"12pt"},
+    {"id":"b_doc_num",    "top":"6.36%", "left":"68.00%","width":"11.00%","fontSize":"11.5pt","fontWeight":"bold"},
+    {"id":"b_fio",        "top":"38.42%","left":"10.25%","width":"82.50%","fontSize":"11.5pt","fontWeight":"bold"},
+    {"id":"b_passport",   "top":"43.89%","left":"10.25%","width":"82.50%","fontSize":"11.5pt","fontWeight":"bold"},
+    {"id":"b_exp_day",    "top":"65.18%","left":"53.00%","width":"4.00%", "fontSize":"12pt"},
+    {"id":"b_exp_month",  "top":"65.09%","left":"58.88%","width":"19.00%","fontSize":"12pt"},
+    {"id":"b_exp_year",   "top":"65.11%","left":"79.13%","width":"4.50%", "fontSize":"13pt"},
+    {"id":"b_issue_day",  "top":"12.19%","left":"68.63%","width":"4.00%", "fontSize":"12pt"},
     {"id":"b_issue_month","top":"12.10%","left":"74.13%","width":"13.00%","fontSize":"12pt"},
     {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
+// --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
 const fortunaTemplateData = [
-    {"id":"f_fio",   "top":"16.43%","left":"7.25%", "width":"34.38%","fontSize":"6pt", "fontWeight":"normal","align":"center"},
-    {"id":"f_doc_num","top":"24.82%","left":"46.75%", "width":"14.00%","fontSize":"8pt", "fontWeight":"normal","align":"center"},
-    {"id":"f_date",   "top":"24.83%","left":"60.50%", "width":"13.25%","fontSize":"8pt", "fontWeight":"normal","align":"center"},
-    {"id":"f_engine", "top":"37.19%","left":"10.25%", "width":"11.88%","fontSize":"6pt", "fontWeight":"normal","align":"left"},
-    {"id":"f_price1", "top":"37.19%","left":"53.75%", "width":"6.88%", "fontSize":"6pt", "fontWeight":"normal","align":"right"},
-    {"id":"f_price2", "top":"37.19%","left":"60.50%", "width":"7.12%", "fontSize":"6pt", "fontWeight":"normal","align":"right"},
-    {"id":"f_total1", "top":"42.67%","left":"60.50%", "width":"7.12%", "fontSize":"6pt", "fontWeight":"normal","align":"right"},
-    {"id":"f_total2", "top":"43.73%","left":"60.50%", "width":"7.12%", "fontSize":"6pt", "fontWeight":"normal","align":"right"}
+    {
+        "id": "f_fio",
+        "top": "16.17%",
+        "left": "7.25%",
+        "width": "34.38%",
+        "fontSize": "7.8pt",
+        "fontWeight": "normal",
+        "align": "center"
+    },
+    {
+        "id": "f_doc_num",
+        "top": "24.82%",
+        "left": "46.75%",
+        "width": "14.00%",
+        "fontSize": "8pt",
+        "fontWeight": "normal",
+        "align": "center"
+    },
+    {
+        "id": "f_date",
+        "top": "24.83%",
+        "left": "60.50%",
+        "width": "13.25%",
+        "fontSize": "8pt",
+        "fontWeight": "normal",
+        "align": "center"
+    },
+    {
+        "id": "f_engine",
+        "top": "37.19%",
+        "left": "10.25%",
+        "width": "11.88%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "left"
+    },
+    {
+        "id": "f_price1",
+        "top": "37.19%",
+        "left": "53.75%",
+        "width": "6.88%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_price2",
+        "top": "37.19%",
+        "left": "60.50%",
+        "width": "7.12%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_total1",
+        "top": "42.67%",
+        "left": "60.50%",
+        "width": "7.12%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_total2",
+        "top": "43.73%",
+        "left": "60.50%",
+        "width": "7.12%",
+        "fontSize": "6pt",
+        "fontWeight": "normal",
+        "align": "right"
+    },
+    {
+        "id": "f_city",
+        "top": "10.80%",
+        "left": "7.00%",
+        "width": "14.00%",
+        "fontSize": "8pt",
+        "fontWeight": "normal",
+        "align": "left"
+    }
 ];
 
 // --- INITIALIZATION ---
@@ -289,12 +363,14 @@ async function generateBaikalPdf() {
 }
 
 // FORTUNA PDF
+// --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
 function updateFortunaDocument() {
     const dateValue = document.getElementById('input_date').value;
     const formattedDate = dateValue ? dateValue.split('-').reverse().join('.') : '';
     const price = parseFloat(document.getElementById('input_amount').value);
     const formattedPrice = !isNaN(price) ? price.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00';
     
+    document.getElementById('f_city').innerText = document.getElementById('input_city').value;
     document.getElementById('f_fio').innerText = document.getElementById('input_recipient_name').value;
     document.getElementById('f_doc_num').innerText = document.getElementById('input_doc_num').value;
     document.getElementById('f_date').innerText = formattedDate;
