@@ -343,7 +343,11 @@ function updateBaikalDocument() {
         ['b_issue_year', 'b_exp_year'].forEach(id => document.getElementById(id).innerText = year);
     }
 }
+
 function updateFortunaDocument() {
+    // ВАЖНО: Применяем стили перед обновлением текста
+    applyFortunaStyles();
+    
     const dateValue = document.getElementById('input_date').value;
     const formattedDate = dateValue ? dateValue.split('-').reverse().join('.') : '';
     const price = parseFloat(document.getElementById('input_amount').value);
@@ -357,6 +361,21 @@ function updateFortunaDocument() {
     ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.innerText = formattedPrice;
+    });
+}
+
+// НОВАЯ ФУНКЦИЯ: Применение стилей для полей Фортуны
+function applyFortunaStyles() {
+    fortunaTemplateData.forEach(item => {
+        const field = document.getElementById(item.id);
+        if(field) {
+            field.style.top = item.top;
+            field.style.left = item.left;
+            field.style.width = item.width;
+            field.style.fontSize = item.fontSize;
+            field.style.fontWeight = item.fontWeight;
+            field.style.textAlign = item.align || 'left';
+        }
     });
 }
 
@@ -418,10 +437,12 @@ async function generateExcel() {
         hideLoading();
     }
 }
+
 function showLoading(message) {
     document.getElementById('loading-text').textContent = message || 'Загрузка...';
     document.getElementById('loading-overlay').classList.remove('hidden');
 }
+
 function hideLoading() {
     document.getElementById('loading-overlay').classList.add('hidden');
 }
