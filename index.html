@@ -19,7 +19,7 @@
         .background-image { display: block; width: 100%; height: auto; }
         .data-field { position: absolute; font-family: Arial, sans-serif; color: black; }
 
-        /* Специфичные стили для полей АТЭК */
+        /* Specific styles for ATEK fields */
         #a_fio { white-space: normal; word-wrap: break-word; line-height: 1.2; }
         #a_shapka, #a_dvs { white-space: nowrap; }
         .custom-underline { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 7px; }
@@ -62,6 +62,7 @@
         </div>
     </div>
 
+    <!-- Hidden containers for PDF rendering -->
     <div id="document-container">
         <div id="baikal-container" class="render-container"><img id="baikal-background-image" class="background-image" src="" /></div>
         <div id="fortuna-container" class="render-container"><img id="fortuna-background-image" class="background-image" src="" /></div>
@@ -86,24 +87,24 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновленные данные для Фортуны ---
+// --- UPDATED FORTUNA DATA ---
 const fortunaTemplateData = [
     {
         "id": "f_fio",
         "top": "16.17%",
-        "left": "7.25%",
+        "left": "7.25%", 
         "width": "34.38%",
         "fontSize": "7.8pt",
         "fontWeight": "normal",
         "align": "center"
     },
     {
-        "id": "f_doc_num",
+        "id": "f_doc_num", 
         "top": "24.82%",
         "left": "46.75%",
         "width": "14.00%",
         "fontSize": "8pt",
-        "fontWeight": "normal",
+        "fontWeight": "normal", 
         "align": "center"
     },
     {
@@ -117,7 +118,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_engine",
-        "top": "37.19%",
+        "top": "37.19%", 
         "left": "10.25%",
         "width": "11.88%",
         "fontSize": "6pt",
@@ -136,7 +137,7 @@ const fortunaTemplateData = [
     {
         "id": "f_price2",
         "top": "37.19%",
-        "left": "60.50%",
+        "left": "60.50%", 
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -156,7 +157,7 @@ const fortunaTemplateData = [
         "top": "43.73%",
         "left": "60.50%",
         "width": "7.12%",
-        "fontSize": "6pt",
+        "fontSize": "6pt", 
         "fontWeight": "normal",
         "align": "right"
     },
@@ -379,7 +380,6 @@ function updateAtekDocument() {
 // --- Helper Functions ---
 function populateRenderContainer(containerId, data) {
     const container = document.getElementById(containerId);
-    // Очищаем предыдущие поля, кроме фонового изображения
     container.querySelectorAll('.data-field').forEach(el => el.remove());
     
     data.forEach(item => {
@@ -391,7 +391,7 @@ function populateRenderContainer(containerId, data) {
         field.style.width = item.width;
         field.style.fontSize = item.fontSize;
         field.style.fontWeight = item.fontWeight;
-        field.style.textAlign = item.align; // Добавлено применение align
+        field.style.textAlign = item.align;
         container.appendChild(field);
     });
 }
