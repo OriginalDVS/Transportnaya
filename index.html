@@ -266,6 +266,9 @@ async function loadAllTemplates() {
         loadFile('./atek.jpg', 'image', 'atek-background-image')
     ]);
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
+    
+    // ВАЖНО: Применяем стили Фортуны после загрузки
+    applyFortunaStyles();
 }
 
 async function loadFile(url, type, elementId) {
@@ -364,7 +367,7 @@ function updateFortunaDocument() {
     });
 }
 
-// НОВАЯ ФУНКЦИЯ: Применение стилей для полей Фортуны
+// ФУНКЦИЯ: Применение стилей для полей Фортуны
 function applyFortunaStyles() {
     fortunaTemplateData.forEach(item => {
         const field = document.getElementById(item.id);
@@ -375,6 +378,9 @@ function applyFortunaStyles() {
             field.style.fontSize = item.fontSize;
             field.style.fontWeight = item.fontWeight;
             field.style.textAlign = item.align || 'left';
+            // Убедимся, что элемент видим и позиционирован правильно
+            field.style.display = 'block';
+            field.style.position = 'absolute';
         }
     });
 }
@@ -413,6 +419,11 @@ function populateRenderContainer(containerId, data) {
         field.style.textAlign = item.align;
         container.appendChild(field);
     });
+    
+    // ВАЖНО: Применяем стили для Фортуны сразу после создания элементов
+    if (containerId === 'fortuna-container') {
+        applyFortunaStyles();
+    }
 }
 
 async function generateExcel() {
