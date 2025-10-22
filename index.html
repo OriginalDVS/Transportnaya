@@ -13,7 +13,7 @@
         body { -webkit-tap-highlight-color: transparent; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
+        
         #document-container { position: absolute; left: -9999px; top: 0; width: 800px; }
         .render-container { position: relative; width: 100%; background-color: white; }
         .background-image { display: block; width: 100%; height: auto; }
@@ -391,7 +391,7 @@ function populateRenderContainer(containerId, data) {
         field.style.width = item.width;
         field.style.fontSize = item.fontSize;
         field.style.fontWeight = item.fontWeight;
-        field.style.textAlign = item.align;
+        field.style.textAlign = item.align; // Добавлено применение align
         container.appendChild(field);
     });
 }
