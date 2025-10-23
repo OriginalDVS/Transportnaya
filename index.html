@@ -87,10 +87,11 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
+// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновленные координаты для Фортуны ---
 const fortunaTemplateData = [
     {
         "id": "f_fio",
-        "top": "16.3%", // Adjusted
+        "top": "16.3%", // Adjusted in previous step
         "left": "7.25%",
         "width": "34.38%",
         "fontSize": "7.8pt",
@@ -99,7 +100,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_doc_num",
-        "top": "24.95%", // Adjusted
+        "top": "24.95%", // Adjusted in previous step
         "left": "46.75%",
         "width": "14.00%",
         "fontSize": "8pt",
@@ -108,7 +109,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_date",
-        "top": "24.95%", // Adjusted
+        "top": "24.95%", // Adjusted in previous step
         "left": "60.50%",
         "width": "13.25%",
         "fontSize": "8pt",
@@ -117,8 +118,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_engine",
-        "top": "37.30%", // Adjusted
-        "left": "10.80%", // Adjusted
+        "top": "37.40%", // Adjusted +0.1%
+        "left": "10.80%", // Adjusted in previous step
         "width": "11.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -126,8 +127,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price1",
-        "top": "37.30%", // Adjusted
-        "left": "53.60%", // Adjusted
+        "top": "37.40%", // Adjusted +0.1%
+        "left": "53.60%", // Adjusted in previous step
         "width": "6.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -135,8 +136,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price2",
-        "top": "37.30%", // Adjusted
-        "left": "60.25%", // Adjusted
+        "top": "37.40%", // Adjusted +0.1%
+        "left": "60.25%", // Adjusted in previous step
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -144,8 +145,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total1",
-        "top": "42.80%", // Adjusted
-        "left": "60.25%", // Adjusted
+        "top": "42.90%", // Adjusted +0.1%
+        "left": "60.25%", // Adjusted in previous step
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -153,8 +154,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total2",
-        "top": "43.85%", // Adjusted
-        "left": "60.25%", // Adjusted
+        "top": "43.95%", // Adjusted +0.1%
+        "left": "60.25%", // Adjusted in previous step
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -162,7 +163,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_city",
-        "top": "10.95%", // Adjusted
+        "top": "10.95%", // Adjusted in previous step
         "left": "7.00%",
         "width": "14.00%",
         "fontSize": "8pt",
@@ -196,12 +197,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await loadAllTemplates(); // Загружаем все шаблоны
     } catch (error) {
-        // Если ЛЮБОЙ файл не загрузился, показываем ошибку
         document.getElementById('loading-text').textContent = 'Ошибка загрузки шаблонов!';
         console.error("Error during loadAllTemplates:", error);
         alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12) для подробностей.');
     } finally {
-        // Убираем экран загрузки В ЛЮБОМ СЛУЧАЕ (успех или ошибка)
         hideLoading(); 
     }
 });
@@ -286,6 +285,7 @@ function showFormScreen(type) {
     
     buttons.innerHTML = buttonsHTML;
 
+    // Reattach event listeners after updating innerHTML
     if (type === 'baikal') {
         const baikalPdfBtn = document.getElementById('generate-baikal-pdf');
         const excelBtn = document.getElementById('generate-excel');
@@ -303,11 +303,9 @@ function showFormScreen(type) {
 }
 
 // --- FILE HANDLING ---
-// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Возвращаем старый loadFile ---
 async function loadFile(url, type, elementId) {
     const response = await fetch(url);
     if (!response.ok) {
-        // Пробрасываем ошибку, чтобы Promise.all мог ее поймать
         throw new Error(`Ошибка загрузки ${url}: ${response.statusText}`);
     }
 
@@ -318,8 +316,6 @@ async function loadFile(url, type, elementId) {
             el.src = URL.createObjectURL(blob);
         } else {
             console.error(`Element with ID "${elementId}" not found for image.`);
-            // Можно пробросить ошибку, если критично, что элемент не найден
-            // throw new Error(`Element with ID "${elementId}" not found for image.`);
         }
     } else { // excel
         return await response.arrayBuffer();
@@ -327,14 +323,11 @@ async function loadFile(url, type, elementId) {
 }
 
 async function loadAllTemplates() {
-    // Promise.all будет ждать выполнения всех промисов loadFile
-    // Если любой из них завершится с ошибкой, Promise.all будет отклонен
     await Promise.all([
         loadFile('./baikal.jpg', 'image', 'baikal-background-image'),
         loadFile('./fortuna.jpg', 'image', 'fortuna-background-image'),
         loadFile('./atek.jpg', 'image', 'atek-background-image')
     ]);
-    // Эта строка выполнится только если ВСЕ картинки загрузились успешно
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
 }
 
@@ -370,7 +363,7 @@ async function generatePdfFor(containerId) {
 
     showLoading('Подготовка PDF...');
     try {
-        await new Promise(r => setTimeout(r, 100)); // Даем время на отрисовку
+        await new Promise(r => setTimeout(r, 100)); // Allow time for rendering
         const canvas = await html2canvas(container, { scale: 3, useCORS: true });
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
