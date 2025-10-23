@@ -87,29 +87,29 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновленные координаты для Фортуны ---
+// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновленные данные для Фортуны ---
 const fortunaTemplateData = [
     {
         "id": "f_fio",
-        "top": "16.35%", // down 2px
-        "left": "7.25%", 
+        "top": "16.3%", // Adjusted
+        "left": "7.25%",
         "width": "34.38%",
         "fontSize": "7.8pt",
         "fontWeight": "normal",
         "align": "center"
     },
     {
-        "id": "f_doc_num", 
-        "top": "25.00%", // down 2px
+        "id": "f_doc_num",
+        "top": "24.95%", // Adjusted
         "left": "46.75%",
         "width": "14.00%",
         "fontSize": "8pt",
-        "fontWeight": "normal", 
+        "fontWeight": "normal",
         "align": "center"
     },
     {
         "id": "f_date",
-        "top": "25.01%", // down 2px
+        "top": "24.95%", // Adjusted
         "left": "60.50%",
         "width": "13.25%",
         "fontSize": "8pt",
@@ -118,8 +118,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_engine",
-        "top": "37.37%", // down 2px
-        "left": "10.50%", // right 2px
+        "top": "37.30%", // Adjusted
+        "left": "10.80%", // Adjusted
         "width": "11.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -127,8 +127,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price1",
-        "top": "37.37%", // down 2px
-        "left": "53.50%", // left 2px
+        "top": "37.30%", // Adjusted
+        "left": "53.60%", // Adjusted
         "width": "6.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -136,8 +136,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price2",
-        "top": "37.37%", // down 2px
-        "left": "60.25%", // left 2px
+        "top": "37.30%", // Adjusted
+        "left": "60.25%", // Adjusted
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -145,8 +145,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total1",
-        "top": "42.85%", // down 2px
-        "left": "60.25%", // left 2px
+        "top": "42.80%", // Adjusted
+        "left": "60.25%", // Adjusted
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -154,16 +154,16 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total2",
-        "top": "43.91%", // down 2px
-        "left": "60.25%", // left 2px
+        "top": "43.85%", // Adjusted
+        "left": "60.25%", // Adjusted
         "width": "7.12%",
-        "fontSize": "6pt", 
+        "fontSize": "6pt",
         "fontWeight": "normal",
         "align": "right"
     },
     {
         "id": "f_city",
-        "top": "10.98%", // down 2px
+        "top": "10.95%", // Adjusted
         "left": "7.00%",
         "width": "14.00%",
         "fontSize": "8pt",
@@ -180,41 +180,76 @@ const atekTemplateData = [
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    populateRenderContainer('baikal-container', baikalTemplateData);
-    populateRenderContainer('fortuna-container', fortunaTemplateData);
-    populateRenderContainer('atek-container', atekTemplateData);
+    // Добавим проверки перед вызовом populateRenderContainer
+    if (document.getElementById('baikal-container')) {
+        populateRenderContainer('baikal-container', baikalTemplateData);
+    } else { console.error("Container 'baikal-container' not found"); }
+    
+    if (document.getElementById('fortuna-container')) {
+        populateRenderContainer('fortuna-container', fortunaTemplateData);
+    } else { console.error("Container 'fortuna-container' not found"); }
+    
+    if (document.getElementById('atek-container')) {
+        populateRenderContainer('atek-container', atekTemplateData);
+    } else { console.error("Container 'atek-container' not found"); }
+
     setupNavigation();
 
     try {
         await loadAllTemplates();
     } catch (error) {
+        // Ошибки теперь должны перехватываться здесь, если loadFile их пробросит
         document.getElementById('loading-text').textContent = 'Ошибка загрузки шаблонов!';
-        console.error(error);
-        alert('Не удалось загрузить шаблоны. Проверьте консоль (F12) для подробностей.');
+        console.error("Error during loadAllTemplates:", error);
+        alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12) для подробностей.');
     } finally {
-        hideLoading();
+        hideLoading(); // Этот блок выполнится всегда
     }
 });
 
 function setupNavigation() {
-    document.getElementById('select-baikal').addEventListener('click', () => showFormScreen('baikal'));
-    document.getElementById('select-fortuna').addEventListener('click', () => showFormScreen('fortuna'));
-    document.getElementById('select-atek').addEventListener('click', () => showFormScreen('atek'));
-    document.getElementById('back-to-selection').addEventListener('click', showSelectionScreen);
+    // Добавляем проверки на существование элементов
+    const baikalBtn = document.getElementById('select-baikal');
+    const fortunaBtn = document.getElementById('select-fortuna');
+    const atekBtn = document.getElementById('select-atek');
+    const backBtn = document.getElementById('back-to-selection');
+
+    if (baikalBtn) baikalBtn.addEventListener('click', () => showFormScreen('baikal'));
+    else console.error("Button 'select-baikal' not found");
+    
+    if (fortunaBtn) fortunaBtn.addEventListener('click', () => showFormScreen('fortuna'));
+    else console.error("Button 'select-fortuna' not found");
+
+    if (atekBtn) atekBtn.addEventListener('click', () => showFormScreen('atek'));
+    else console.error("Button 'select-atek' not found");
+
+    if (backBtn) backBtn.addEventListener('click', showSelectionScreen);
+    else console.error("Button 'back-to-selection' not found");
 }
 
 // --- UI FLOW CONTROL ---
 function showSelectionScreen() {
-    document.getElementById('form-container').classList.add('hidden');
-    document.getElementById('selection-screen').classList.remove('hidden');
+    const formCont = document.getElementById('form-container');
+    const selScreen = document.getElementById('selection-screen');
+    if (formCont) formCont.classList.add('hidden');
+    if (selScreen) selScreen.classList.remove('hidden');
 }
 
 function showFormScreen(type) {
-    document.getElementById('selection-screen').classList.add('hidden');
-    document.getElementById('form-container').classList.remove('hidden');
+    const selScreen = document.getElementById('selection-screen');
+    const formCont = document.getElementById('form-container');
+    if (selScreen) selScreen.classList.add('hidden');
+    if (formCont) formCont.classList.remove('hidden');
 
     const form = document.getElementById('data-form');
     const buttons = document.getElementById('generator-buttons');
+    const formTitleEl = document.getElementById('form-title');
+    
+    if (!form || !buttons || !formTitleEl) {
+        console.error("Form elements not found, cannot show form screen.");
+        return;
+    }
+
     let formHTML = `
         <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
         <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
@@ -245,20 +280,48 @@ function showFormScreen(type) {
         buttonsHTML = `<button id="generate-atek-pdf" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">Скачать Заявку (PDF)</button>`;
     }
 
-    document.getElementById('form-title').innerText = formTitle;
+    formTitleEl.innerText = formTitle;
     form.innerHTML = formHTML;
-    document.getElementById('input_date').valueAsDate = new Date();
+    
+    const dateInput = document.getElementById('input_date');
+    if (dateInput) dateInput.valueAsDate = new Date();
+    
     buttons.innerHTML = buttonsHTML;
 
+    // Переназначаем слушатели после обновления innerHTML
     if (type === 'baikal') {
-        document.getElementById('generate-baikal-pdf').addEventListener('click', generateBaikalPdf);
-        document.getElementById('generate-excel').addEventListener('click', generateExcel);
+        const baikalPdfBtn = document.getElementById('generate-baikal-pdf');
+        const excelBtn = document.getElementById('generate-excel');
+        if (baikalPdfBtn) baikalPdfBtn.addEventListener('click', generateBaikalPdf);
+        if (excelBtn) excelBtn.addEventListener('click', generateExcel);
     }
-    if (type === 'fortuna') document.getElementById('generate-fortuna-pdf').addEventListener('click', generateFortunaPdf);
-    if (type === 'atek') document.getElementById('generate-atek-pdf').addEventListener('click', generateAtekPdf);
+    if (type === 'fortuna') {
+        const fortunaPdfBtn = document.getElementById('generate-fortuna-pdf');
+        if (fortunaPdfBtn) fortunaPdfBtn.addEventListener('click', generateFortunaPdf);
+    }
+    if (type === 'atek') {
+         const atekPdfBtn = document.getElementById('generate-atek-pdf');
+         if (atekPdfBtn) atekPdfBtn.addEventListener('click', generateAtekPdf);
+    }
 }
 
 // --- FILE HANDLING ---
+async function loadFile(url, type, elementId) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Ошибка загрузки ${url}: ${response.statusText}`);
+    }
+    
+    if (type === 'image') {
+        const blob = await response.blob();
+        const el = document.getElementById(elementId);
+        if (el) el.src = URL.createObjectURL(blob);
+        else console.error(`Element with ID "${elementId}" not found for image.`);
+    } else { // excel
+        return await response.arrayBuffer();
+    }
+}
+
 async function loadAllTemplates() {
     await Promise.all([
         loadFile('./baikal.jpg', 'image', 'baikal-background-image'),
@@ -268,37 +331,30 @@ async function loadAllTemplates() {
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
 }
 
-async function loadFile(url, type, elementId) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Ошибка загрузки ${url}: ${response.statusText}`);
-        
-        if (type === 'image') {
-            const blob = await response.blob();
-            const el = document.getElementById(elementId);
-            if(el) el.src = URL.createObjectURL(blob);
-        } else {
-            return await response.arrayBuffer();
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
 
 // --- DOCUMENT GENERATION ---
 function createFileName() {
-    const dateValue = document.getElementById('input_date').value;
+    const dateValue = document.getElementById('input_date')?.value;
     const datePart = dateValue ? dateValue.split('-').reverse().join('.') : '';
     const cityPart = document.getElementById('input_city')?.value || '';
     const enginePart = document.getElementById('input_engine_model')?.value || '';
-    const fullName = document.getElementById('input_recipient_name').value;
+    const fullName = document.getElementById('input_recipient_name')?.value || '';
     const lastNamePart = fullName ? fullName.split(' ')[0] : '';
     return [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ') + '.pdf';
 }
 
 async function generatePdfFor(containerId) {
     const container = document.getElementById(containerId);
+    if (!container) {
+         alert(`Ошибка: Не найден контейнер ${containerId}`);
+         return;
+    }
     const image = container.querySelector('.background-image');
+    if (!image) {
+         alert(`Ошибка: Не найдено фоновое изображение в ${containerId}`);
+         return;
+    }
+
 
     if (!image.src || image.naturalWidth === 0) {
         alert("Шаблон для этого документа не загружен. Убедитесь, что файл " + containerId.replace('-container','.jpg') + " есть в репозитории и обновите страницу.");
@@ -307,7 +363,7 @@ async function generatePdfFor(containerId) {
 
     showLoading('Подготовка PDF...');
     try {
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 100)); // Даем время на отрисовку
         const canvas = await html2canvas(container, { scale: 3, useCORS: true });
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
@@ -328,32 +384,65 @@ const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-conta
 
 // --- Document Update Functions ---
 function updateBaikalDocument() {
-    document.getElementById('b_doc_num').innerText = document.getElementById('input_doc_num').value;
-    document.getElementById('b_fio').innerText = document.getElementById('input_recipient_name').value;
-    document.getElementById('b_passport').innerText = document.getElementById('input_recipient_id').value || '';
-    const dateValue = document.getElementById('input_date').value;
-    if (dateValue) {
+    const docNumEl = document.getElementById('b_doc_num');
+    const fioEl = document.getElementById('b_fio');
+    const passportEl = document.getElementById('b_passport');
+    const inputDocNumEl = document.getElementById('input_doc_num');
+    const inputRecipientNameEl = document.getElementById('input_recipient_name');
+    const inputRecipientIdEl = document.getElementById('input_recipient_id');
+    const inputDateEl = document.getElementById('input_date');
+
+    if (docNumEl && inputDocNumEl) docNumEl.innerText = inputDocNumEl.value;
+    if (fioEl && inputRecipientNameEl) fioEl.innerText = inputRecipientNameEl.value;
+    if (passportEl && inputRecipientIdEl) passportEl.innerText = inputRecipientIdEl.value || '';
+    
+    if (inputDateEl && inputDateEl.value) {
+        const dateValue = inputDateEl.value;
         const d = new Date(dateValue);
         const months = ["Января","Февраля","Марта","Апреля","Мая","Июня","Июля","Августа","Сентября","Октября","Ноября","Декабря"];
         const day = String(d.getDate()).padStart(2, '0');
         const month = months[d.getMonth()];
         const year = String(d.getFullYear()).slice(2);
-        ['b_issue_day', 'b_exp_day'].forEach(id => document.getElementById(id).innerText = day);
-        ['b_issue_month', 'b_exp_month'].forEach(id => document.getElementById(id).innerText = month);
-        ['b_issue_year', 'b_exp_year'].forEach(id => document.getElementById(id).innerText = year);
+        
+        ['b_issue_day', 'b_exp_day'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = day;
+        });
+        ['b_issue_month', 'b_exp_month'].forEach(id => {
+             const el = document.getElementById(id);
+             if (el) el.innerText = month;
+        });
+        ['b_issue_year', 'b_exp_year'].forEach(id => {
+             const el = document.getElementById(id);
+             if (el) el.innerText = year;
+        });
     }
 }
 function updateFortunaDocument() {
-    const dateValue = document.getElementById('input_date').value;
+    const inputDateEl = document.getElementById('input_date');
+    const inputAmountEl = document.getElementById('input_amount');
+    const inputCityEl = document.getElementById('input_city');
+    const inputRecipientNameEl = document.getElementById('input_recipient_name');
+    const inputDocNumEl = document.getElementById('input_doc_num');
+    const inputEngineModelEl = document.getElementById('input_engine_model');
+
+    const dateValue = inputDateEl?.value;
     const formattedDate = dateValue ? dateValue.split('-').reverse().join('.') : '';
-    const price = parseFloat(document.getElementById('input_amount').value);
+    const price = inputAmountEl ? parseFloat(inputAmountEl.value) : NaN;
     const formattedPrice = !isNaN(price) ? price.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00';
     
-    document.getElementById('f_city').innerText = document.getElementById('input_city').value;
-    document.getElementById('f_fio').innerText = document.getElementById('input_recipient_name').value;
-    document.getElementById('f_doc_num').innerText = document.getElementById('input_doc_num').value;
-    document.getElementById('f_date').innerText = formattedDate;
-    document.getElementById('f_engine').innerText = document.getElementById('input_engine_model').value;
+    const cityEl = document.getElementById('f_city');
+    const fioEl = document.getElementById('f_fio');
+    const docNumEl = document.getElementById('f_doc_num');
+    const dateEl = document.getElementById('f_date');
+    const engineEl = document.getElementById('f_engine');
+
+    if (cityEl && inputCityEl) cityEl.innerText = inputCityEl.value;
+    if (fioEl && inputRecipientNameEl) fioEl.innerText = inputRecipientNameEl.value;
+    if (docNumEl && inputDocNumEl) docNumEl.innerText = inputDocNumEl.value;
+    if (dateEl) dateEl.innerText = formattedDate;
+    if (engineEl && inputEngineModelEl) engineEl.innerText = inputEngineModelEl.value;
+    
     ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.innerText = formattedPrice;
@@ -361,51 +450,76 @@ function updateFortunaDocument() {
 }
 
 function updateAtekDocument() {
-    const fio = document.getElementById('input_recipient_name').value;
-    const dvs = document.getElementById('input_engine_model').value;
-    
-    document.getElementById('a_fio').textContent = fio;
-    document.getElementById('a_dvs').textContent = dvs;
+    const inputRecipientNameEl = document.getElementById('input_recipient_name');
+    const inputEngineModelEl = document.getElementById('input_engine_model');
+    const inputDateEl = document.getElementById('input_date');
+    const inputDocNumEl = document.getElementById('input_doc_num');
+    const fioEl = document.getElementById('a_fio');
+    const dvsEl = document.getElementById('a_dvs');
+    const shapkaEl = document.getElementById('a_shapka');
 
-    const date = new Date(document.getElementById('input_date').value || new Date());
+    const fio = inputRecipientNameEl?.value || '';
+    const dvs = inputEngineModelEl?.value || '';
+    
+    if (fioEl) fioEl.textContent = fio;
+    if (dvsEl) dvsEl.textContent = dvs;
+
+    const date = new Date(inputDateEl?.value || new Date());
     const day = date.getDate().toString();
     const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     const month = genitiveMonths[date.getMonth()];
     const year = date.getFullYear();
-    const docNum = document.getElementById('input_doc_num').value;
+    const docNum = inputDocNumEl?.value || '';
     
-    document.getElementById('a_shapka').innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
+    if (shapkaEl) shapkaEl.innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
 }
 
 // --- Helper Functions ---
 function populateRenderContainer(containerId, data) {
     const container = document.getElementById(containerId);
+     if (!container) {
+        console.error(`Container with ID "${containerId}" not found in populateRenderContainer.`);
+        return; 
+    }
     container.querySelectorAll('.data-field').forEach(el => el.remove());
     
     data.forEach(item => {
+        if (!item.id || typeof item.id !== 'string') {
+            console.error(`Invalid or missing ID in template data for container "${containerId}":`, item);
+            return; 
+        }
         const field = document.createElement('div');
         field.id = item.id;
         field.className = 'data-field';
-        field.style.top = item.top;
-        field.style.left = item.left;
-        field.style.width = item.width;
-        field.style.fontSize = item.fontSize;
-        field.style.fontWeight = item.fontWeight;
-        field.style.textAlign = item.align;
+        field.style.top = item.top || '0%';
+        field.style.left = item.left || '0%';
+        field.style.width = item.width || 'auto';
+        field.style.fontSize = item.fontSize || '10pt';
+        field.style.fontWeight = item.fontWeight || 'normal';
+        field.style.textAlign = item.align || 'left';
         container.appendChild(field);
     });
 }
 
 async function generateExcel() {
+    if (!excelTemplateFile) {
+        alert("Шаблон Excel (baikal_rashod.xlsx) еще не загружен или не найден. Пожалуйста, подождите или проверьте наличие файла.");
+        return;
+    }
     showLoading('Подготовка Excel...');
     try {
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(excelTemplateFile);
+        await workbook.xlsx.load(excelTemplateFile); 
         const worksheet = workbook.getWorksheet(1);
-        const dateValue = document.getElementById('input_date').value;
+        
+        const inputDateEl = document.getElementById('input_date');
+        const inputEngineModelEl = document.getElementById('input_engine_model');
+        const inputAmountEl = document.getElementById('input_amount');
+
+        const dateValue = inputDateEl?.value;
         worksheet.getCell('B2').value = dateValue ? dateValue.split('-').reverse().join('.') : '';
-        worksheet.getCell('A7').value = document.getElementById('input_engine_model').value;
-        const price = parseFloat(document.getElementById('input_amount').value);
+        worksheet.getCell('A7').value = inputEngineModelEl?.value || '';
+        const price = inputAmountEl ? parseFloat(inputAmountEl.value) : NaN;
         if (!isNaN(price)) {
             worksheet.getCell('E7').value = price;
             worksheet.getCell('F7').value = price;
@@ -414,16 +528,20 @@ async function generateExcel() {
         saveAs(new Blob([buffer]), createFileName().replace('.pdf','.xlsx'));
     } catch (error) {
         alert("Ошибка при создании Excel файла: " + error.message);
+        console.error("Excel generation error:", error);
     } finally {
         hideLoading();
     }
 }
 function showLoading(message) {
-    document.getElementById('loading-text').textContent = message || 'Загрузка...';
-    document.getElementById('loading-overlay').classList.remove('hidden');
+    const loadingText = document.getElementById('loading-text');
+    const overlay = document.getElementById('loading-overlay');
+    if (loadingText) loadingText.textContent = message || 'Загрузка...';
+    if (overlay) overlay.classList.remove('hidden');
 }
 function hideLoading() {
-    document.getElementById('loading-overlay').classList.add('hidden');
+     const overlay = document.getElementById('loading-overlay');
+     if (overlay) overlay.classList.add('hidden');
 }
 </script>
 
