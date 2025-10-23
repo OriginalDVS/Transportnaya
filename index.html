@@ -87,7 +87,6 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновленные данные для Фортуны ---
 const fortunaTemplateData = [
     {
         "id": "f_fio",
@@ -180,7 +179,6 @@ const atekTemplateData = [
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // Добавим проверки перед вызовом populateRenderContainer
     if (document.getElementById('baikal-container')) {
         populateRenderContainer('baikal-container', baikalTemplateData);
     } else { console.error("Container 'baikal-container' not found"); }
@@ -196,19 +194,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupNavigation();
 
     try {
-        await loadAllTemplates();
+        await loadAllTemplates(); // Загружаем все шаблоны
     } catch (error) {
-        // Ошибки теперь должны перехватываться здесь, если loadFile их пробросит
+        // Если ЛЮБОЙ файл не загрузился, показываем ошибку
         document.getElementById('loading-text').textContent = 'Ошибка загрузки шаблонов!';
         console.error("Error during loadAllTemplates:", error);
         alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12) для подробностей.');
     } finally {
-        hideLoading(); // Этот блок выполнится всегда
+        // Убираем экран загрузки В ЛЮБОМ СЛУЧАЕ (успех или ошибка)
+        hideLoading(); 
     }
 });
 
 function setupNavigation() {
-    // Добавляем проверки на существование элементов
     const baikalBtn = document.getElementById('select-baikal');
     const fortunaBtn = document.getElementById('select-fortuna');
     const atekBtn = document.getElementById('select-atek');
@@ -288,7 +286,6 @@ function showFormScreen(type) {
     
     buttons.innerHTML = buttonsHTML;
 
-    // Переназначаем слушатели после обновления innerHTML
     if (type === 'baikal') {
         const baikalPdfBtn = document.getElementById('generate-baikal-pdf');
         const excelBtn = document.getElementById('generate-excel');
@@ -306,28 +303,38 @@ function showFormScreen(type) {
 }
 
 // --- FILE HANDLING ---
+// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Возвращаем старый loadFile ---
 async function loadFile(url, type, elementId) {
     const response = await fetch(url);
     if (!response.ok) {
+        // Пробрасываем ошибку, чтобы Promise.all мог ее поймать
         throw new Error(`Ошибка загрузки ${url}: ${response.statusText}`);
     }
-    
+
     if (type === 'image') {
         const blob = await response.blob();
         const el = document.getElementById(elementId);
-        if (el) el.src = URL.createObjectURL(blob);
-        else console.error(`Element with ID "${elementId}" not found for image.`);
+        if (el) {
+            el.src = URL.createObjectURL(blob);
+        } else {
+            console.error(`Element with ID "${elementId}" not found for image.`);
+            // Можно пробросить ошибку, если критично, что элемент не найден
+            // throw new Error(`Element with ID "${elementId}" not found for image.`);
+        }
     } else { // excel
         return await response.arrayBuffer();
     }
 }
 
 async function loadAllTemplates() {
+    // Promise.all будет ждать выполнения всех промисов loadFile
+    // Если любой из них завершится с ошибкой, Promise.all будет отклонен
     await Promise.all([
         loadFile('./baikal.jpg', 'image', 'baikal-background-image'),
         loadFile('./fortuna.jpg', 'image', 'fortuna-background-image'),
         loadFile('./atek.jpg', 'image', 'atek-background-image')
     ]);
+    // Эта строка выполнится только если ВСЕ картинки загрузились успешно
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
 }
 
