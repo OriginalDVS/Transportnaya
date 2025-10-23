@@ -87,11 +87,11 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- UPDATED FORTUNA DATA ---
+// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновленные координаты для Фортуны ---
 const fortunaTemplateData = [
     {
         "id": "f_fio",
-        "top": "16.17%",
+        "top": "16.35%", // down 2px
         "left": "7.25%", 
         "width": "34.38%",
         "fontSize": "7.8pt",
@@ -100,7 +100,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_doc_num", 
-        "top": "24.82%",
+        "top": "25.00%", // down 2px
         "left": "46.75%",
         "width": "14.00%",
         "fontSize": "8pt",
@@ -109,7 +109,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_date",
-        "top": "24.83%",
+        "top": "25.01%", // down 2px
         "left": "60.50%",
         "width": "13.25%",
         "fontSize": "8pt",
@@ -118,8 +118,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_engine",
-        "top": "37.19%", 
-        "left": "10.25%",
+        "top": "37.37%", // down 2px
+        "left": "10.50%", // right 2px
         "width": "11.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -127,8 +127,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price1",
-        "top": "37.19%",
-        "left": "53.75%",
+        "top": "37.37%", // down 2px
+        "left": "53.50%", // left 2px
         "width": "6.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -136,8 +136,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price2",
-        "top": "37.19%",
-        "left": "60.50%", 
+        "top": "37.37%", // down 2px
+        "left": "60.25%", // left 2px
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -145,8 +145,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total1",
-        "top": "42.67%",
-        "left": "60.50%",
+        "top": "42.85%", // down 2px
+        "left": "60.25%", // left 2px
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -154,8 +154,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total2",
-        "top": "43.73%",
-        "left": "60.50%",
+        "top": "43.91%", // down 2px
+        "left": "60.25%", // left 2px
         "width": "7.12%",
         "fontSize": "6pt", 
         "fontWeight": "normal",
@@ -163,7 +163,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_city",
-        "top": "10.80%",
+        "top": "10.98%", // down 2px
         "left": "7.00%",
         "width": "14.00%",
         "fontSize": "8pt",
@@ -266,9 +266,6 @@ async function loadAllTemplates() {
         loadFile('./atek.jpg', 'image', 'atek-background-image')
     ]);
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
-    
-    // ВАЖНО: Применяем стили Фортуны после загрузки
-    applyFortunaStyles();
 }
 
 async function loadFile(url, type, elementId) {
@@ -346,11 +343,7 @@ function updateBaikalDocument() {
         ['b_issue_year', 'b_exp_year'].forEach(id => document.getElementById(id).innerText = year);
     }
 }
-
 function updateFortunaDocument() {
-    // ВАЖНО: Применяем стили перед обновлением текста
-    applyFortunaStyles();
-    
     const dateValue = document.getElementById('input_date').value;
     const formattedDate = dateValue ? dateValue.split('-').reverse().join('.') : '';
     const price = parseFloat(document.getElementById('input_amount').value);
@@ -364,24 +357,6 @@ function updateFortunaDocument() {
     ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.innerText = formattedPrice;
-    });
-}
-
-// ФУНКЦИЯ: Применение стилей для полей Фортуны
-function applyFortunaStyles() {
-    fortunaTemplateData.forEach(item => {
-        const field = document.getElementById(item.id);
-        if(field) {
-            field.style.top = item.top;
-            field.style.left = item.left;
-            field.style.width = item.width;
-            field.style.fontSize = item.fontSize;
-            field.style.fontWeight = item.fontWeight;
-            field.style.textAlign = item.align || 'left';
-            // Убедимся, что элемент видим и позиционирован правильно
-            field.style.display = 'block';
-            field.style.position = 'absolute';
-        }
     });
 }
 
@@ -419,11 +394,6 @@ function populateRenderContainer(containerId, data) {
         field.style.textAlign = item.align;
         container.appendChild(field);
     });
-    
-    // ВАЖНО: Применяем стили для Фортуны сразу после создания элементов
-    if (containerId === 'fortuna-container') {
-        applyFortunaStyles();
-    }
 }
 
 async function generateExcel() {
@@ -448,12 +418,10 @@ async function generateExcel() {
         hideLoading();
     }
 }
-
 function showLoading(message) {
     document.getElementById('loading-text').textContent = message || 'Загрузка...';
     document.getElementById('loading-overlay').classList.remove('hidden');
 }
-
 function hideLoading() {
     document.getElementById('loading-overlay').classList.add('hidden');
 }
@@ -461,3 +429,4 @@ function hideLoading() {
 
 </body>
 </html>
+
