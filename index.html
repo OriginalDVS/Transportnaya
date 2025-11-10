@@ -19,9 +19,9 @@
         .background-image { display: block; width: 100%; height: auto; }
         .data-field { position: absolute; font-family: Arial, sans-serif; color: black; }
 
-        /* Specific styles for ATEK fields */
-        #a_fio { white-space: normal; word-wrap: break-word; line-height: 1.2; }
-        #a_shapka, #a_dvs { white-space: nowrap; }
+        /* Specific styles for ATEK/Newline fields */
+        #a_fio, #nl_fio { white-space: normal; word-wrap: break-word; line-height: 1.2; }
+        #a_shapka, #a_dvs, #nl_shapka, #nl_dvs { white-space: nowrap; }
         .custom-underline { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 7px; }
 
     </style>
@@ -39,7 +39,8 @@
 
         <div id="selection-screen">
             <h2 class="text-xl font-semibold mb-4 text-center border-b pb-2">Выберите операцию</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <!-- Изменена сетка на 2x2 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div id="select-baikal" class="bg-blue-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-600 transition-colors">
                     <h3 class="text-xl font-bold">Байкал Сервис</h3>
                 </div>
@@ -47,7 +48,12 @@
                     <h3 class="text-xl font-bold">Фортуна</h3>
                 </div>
                 <div id="select-atek" class="bg-teal-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-teal-600 transition-colors">
-                    <h3 class="text-xl font-bold">АТЭК</h3>
+                    <!-- Изменено название АТЭК -->
+                    <h3 class="text-xl font-bold">АТЭК (Краснодар)</h3>
+                </div>
+                <!-- Добавлена Новая Линия -->
+                <div id="select-newline" class="bg-sky-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-sky-600 transition-colors">
+                    <h3 class="text-xl font-bold">Новая Линия (Махачкала)</h3>
                 </div>
             </div>
         </div>
@@ -67,6 +73,8 @@
         <div id="baikal-container" class="render-container"><img id="baikal-background-image" class="background-image" src="" /></div>
         <div id="fortuna-container" class="render-container"><img id="fortuna-background-image" class="background-image" src="" /></div>
         <div id="atek-container" class="render-container"><img id="atek-background-image" class="background-image" src="" /></div>
+        <!-- Добавлен контейнер для Новой Линии -->
+        <div id="newline-container" class="render-container"><img id="newline-background-image" class="background-image" src="" /></div>
     </div>
 
 <script>
@@ -82,16 +90,16 @@ const baikalTemplateData = [
     {"id":"b_exp_day", "top":"65.18%","left":"53.00%","width":"4.00%", "fontSize":"12pt"},
     {"id":"b_exp_month", "top":"65.09%","left":"58.88%","width":"19.00%","fontSize":"12pt"},
     {"id":"b_exp_year", "top":"65.11%","left":"79.13%","width":"4.50%", "fontSize":"13pt"},
-    {"id":"b_issue_day", "top":"12.19%","left":"68.63%","width":"4.00%", "fontSize":"12pt"},
-    {"id":"b_issue_month","top":"12.10%","left":"74.13%","width":"13.00%","fontSize":"12pt"},
-    {"id":"b_issue_year", "top":"12.20%","left":"87.63%","width":"3.50%", "fontSize":"12.6pt"}
+    // --- ИЗМЕНЕНИЕ ЗДЕСЬ: Дата выдачи смещена ---
+    {"id":"b_issue_day", "top":"12.39%","left":"68.83%","width":"4.00%", "fontSize":"12pt"},
+    {"id":"b_issue_month","top":"12.30%","left":"74.33%","width":"13.00%","fontSize":"12pt"},
+    {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновленные координаты для Фортуны ---
 const fortunaTemplateData = [
     {
         "id": "f_fio",
-        "top": "16.3%", // Adjusted in previous step
+        "top": "16.3%", 
         "left": "7.25%",
         "width": "34.38%",
         "fontSize": "7.8pt",
@@ -100,7 +108,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_doc_num",
-        "top": "24.95%", // Adjusted in previous step
+        "top": "24.95%", 
         "left": "46.75%",
         "width": "14.00%",
         "fontSize": "8pt",
@@ -109,7 +117,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_date",
-        "top": "24.95%", // Adjusted in previous step
+        "top": "24.95%", 
         "left": "60.50%",
         "width": "13.25%",
         "fontSize": "8pt",
@@ -118,8 +126,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_engine",
-        "top": "37.40%", // Adjusted +0.1%
-        "left": "10.80%", // Adjusted in previous step
+        "top": "37.40%", 
+        "left": "10.80%", 
         "width": "11.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -127,8 +135,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price1",
-        "top": "37.40%", // Adjusted +0.1%
-        "left": "53.60%", // Adjusted in previous step
+        "top": "37.40%", 
+        "left": "53.60%", 
         "width": "6.88%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -136,8 +144,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_price2",
-        "top": "37.40%", // Adjusted +0.1%
-        "left": "60.25%", // Adjusted in previous step
+        "top": "37.40%", 
+        "left": "60.25%", 
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -145,8 +153,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total1",
-        "top": "42.90%", // Adjusted +0.1%
-        "left": "60.25%", // Adjusted in previous step
+        "top": "42.90%", 
+        "left": "60.25%", 
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -154,8 +162,8 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_total2",
-        "top": "43.95%", // Adjusted +0.1%
-        "left": "60.25%", // Adjusted in previous step
+        "top": "43.95%", 
+        "left": "60.25%", 
         "width": "7.12%",
         "fontSize": "6pt",
         "fontWeight": "normal",
@@ -163,7 +171,7 @@ const fortunaTemplateData = [
     },
     {
         "id": "f_city",
-        "top": "10.95%", // Adjusted in previous step
+        "top": "10.95%", 
         "left": "7.00%",
         "width": "14.00%",
         "fontSize": "8pt",
@@ -177,6 +185,14 @@ const atekTemplateData = [
     { "id": "a_shapka", "top": "9.75%", "left": "13.3%", "width": "68.38%", "fontSize": "12pt", "align": "left", "fontWeight": "bold" },
     { "id": "a_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
 ];
+
+// --- Добавлены данные для Новой Линии (копия АТЭК с префиксом nl_) ---
+const newlineTemplateData = [
+    { "id": "nl_fio", "top": "21.82%", "left": "30.80%", "width": "51.00%", "fontSize": "12pt", "align": "left", "fontWeight": "normal" },
+    { "id": "nl_shapka", "top": "9.75%", "left": "13.3%", "width": "68.38%", "fontSize": "12pt", "align": "left", "fontWeight": "bold" },
+    { "id": "nl_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
+];
+
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
@@ -192,10 +208,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         populateRenderContainer('atek-container', atekTemplateData);
     } else { console.error("Container 'atek-container' not found"); }
 
+    if (document.getElementById('newline-container')) {
+        populateRenderContainer('newline-container', newlineTemplateData);
+    } else { console.error("Container 'newline-container' not found"); }
+
     setupNavigation();
 
     try {
-        await loadAllTemplates(); // Загружаем все шаблоны
+        await loadAllTemplates();
     } catch (error) {
         document.getElementById('loading-text').textContent = 'Ошибка загрузки шаблонов!';
         console.error("Error during loadAllTemplates:", error);
@@ -209,6 +229,7 @@ function setupNavigation() {
     const baikalBtn = document.getElementById('select-baikal');
     const fortunaBtn = document.getElementById('select-fortuna');
     const atekBtn = document.getElementById('select-atek');
+    const newlineBtn = document.getElementById('select-newline'); // Добавлена кнопка
     const backBtn = document.getElementById('back-to-selection');
 
     if (baikalBtn) baikalBtn.addEventListener('click', () => showFormScreen('baikal'));
@@ -219,6 +240,9 @@ function setupNavigation() {
 
     if (atekBtn) atekBtn.addEventListener('click', () => showFormScreen('atek'));
     else console.error("Button 'select-atek' not found");
+    
+    if (newlineBtn) newlineBtn.addEventListener('click', () => showFormScreen('newline')); // Добавлен слушатель
+    else console.error("Button 'select-newline' not found");
 
     if (backBtn) backBtn.addEventListener('click', showSelectionScreen);
     else console.error("Button 'back-to-selection' not found");
@@ -265,16 +289,20 @@ function showFormScreen(type) {
     } else if (type === 'fortuna') {
         formTitle = 'Данные для "Фортуна"';
         buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Создать акт выдачи</button>`;
-    } else if (type === 'atek') {
-        formTitle = 'Данные для "АТЭК"';
+    } else if (type === 'atek' || type === 'newline') { // Объединяем логику ATEK и Newline
+        formTitle = type === 'atek' ? 'Данные для "АТЭК (Краснодар)"' : 'Данные для "Новая Линия (Махачкала)"';
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю030"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
-             <div><label for="input_city" class="block text-sm font-medium">Город (для названия файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Сургут"></div>
+             <div><label for="input_city" class="block text-sm font-medium">Город (для названия файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Город"></div>
             <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО и паспортные данные</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, паспорт..."></div>
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
         `;
-        buttonsHTML = `<button id="generate-atek-pdf" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">Скачать Заявку (PDF)</button>`;
+        if (type === 'atek') {
+            buttonsHTML = `<button id="generate-atek-pdf" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">Скачать Заявку (PDF)</button>`;
+        } else {
+            buttonsHTML = `<button id="generate-newline-pdf" class="w-full bg-sky-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-700">Скачать Заявку (PDF)</button>`;
+        }
     }
 
     formTitleEl.innerText = formTitle;
@@ -299,6 +327,10 @@ function showFormScreen(type) {
     if (type === 'atek') {
          const atekPdfBtn = document.getElementById('generate-atek-pdf');
          if (atekPdfBtn) atekPdfBtn.addEventListener('click', generateAtekPdf);
+    }
+    if (type === 'newline') {
+         const newlinePdfBtn = document.getElementById('generate-newline-pdf');
+         if (newlinePdfBtn) newlinePdfBtn.addEventListener('click', generateNewlinePdf);
     }
 }
 
@@ -326,7 +358,8 @@ async function loadAllTemplates() {
     await Promise.all([
         loadFile('./baikal.jpg', 'image', 'baikal-background-image'),
         loadFile('./fortuna.jpg', 'image', 'fortuna-background-image'),
-        loadFile('./atek.jpg', 'image', 'atek-background-image')
+        loadFile('./atek.jpg', 'image', 'atek-background-image'),
+        loadFile('./newline.jpg', 'image', 'newline-background-image') // Добавлен newline.jpg
     ]);
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
 }
@@ -355,9 +388,9 @@ async function generatePdfFor(containerId) {
          return;
     }
 
-
     if (!image.src || image.naturalWidth === 0) {
-        alert("Шаблон для этого документа не загружен. Убедитесь, что файл " + containerId.replace('-container','.jpg') + " есть в репозитории и обновите страницу.");
+        let fileName = containerId.replace('-container','.jpg');
+        alert(`Шаблон для этого документа (${fileName}) не загружен. Убедитесь, что файл ${fileName} есть в репозитории и обновите страницу.`);
         return;
     }
 
@@ -381,6 +414,7 @@ async function generatePdfFor(containerId) {
 const generateBaikalPdf = () => { updateBaikalDocument(); generatePdfFor('baikal-container'); };
 const generateFortunaPdf = () => { updateFortunaDocument(); generatePdfFor('fortuna-container'); };
 const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-container'); };
+const generateNewlinePdf = () => { updateNewlineDocument(); generatePdfFor('newline-container'); }; // Добавлена функция
 
 // --- Document Update Functions ---
 function updateBaikalDocument() {
@@ -474,6 +508,32 @@ function updateAtekDocument() {
     if (shapkaEl) shapkaEl.innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
 }
 
+// Добавлена функция для Новой Линии
+function updateNewlineDocument() {
+    const inputRecipientNameEl = document.getElementById('input_recipient_name');
+    const inputEngineModelEl = document.getElementById('input_engine_model');
+    const inputDateEl = document.getElementById('input_date');
+    const inputDocNumEl = document.getElementById('input_doc_num');
+    const fioEl = document.getElementById('nl_fio');
+    const dvsEl = document.getElementById('nl_dvs');
+    const shapkaEl = document.getElementById('nl_shapka');
+
+    const fio = inputRecipientNameEl?.value || '';
+    const dvs = inputEngineModelEl?.value || '';
+    
+    if (fioEl) fioEl.textContent = fio;
+    if (dvsEl) dvsEl.textContent = dvs;
+
+    const date = new Date(inputDateEl?.value || new Date());
+    const day = date.getDate().toString();
+    const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const month = genitiveMonths[date.getMonth()];
+    const year = date.getFullYear();
+    const docNum = inputDocNumEl?.value || '';
+    
+    if (shapkaEl) shapkaEl.innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
+}
+
 // --- Helper Functions ---
 function populateRenderContainer(containerId, data) {
     const container = document.getElementById(containerId);
@@ -518,11 +578,11 @@ async function generateExcel() {
 
         const dateValue = inputDateEl?.value;
         worksheet.getCell('B2').value = dateValue ? dateValue.split('-').reverse().join('.') : '';
-        worksheet.getCell('A7').value = inputEngineModelEl?.value || '';
+        worksDheet.getCell('A7').value = inputEngineModelEl?.value || '';
         const price = inputAmountEl ? parseFloat(inputAmountEl.value) : NaN;
         if (!isNaN(price)) {
             worksheet.getCell('E7').value = price;
-            worksheet.getCell('F7').value = price;
+            worksBheet.getCell('F7').value = price;
         }
         const buffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([buffer]), createFileName().replace('.pdf','.xlsx'));
@@ -547,4 +607,3 @@ function hideLoading() {
 
 </body>
 </html>
-
