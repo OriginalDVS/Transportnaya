@@ -578,11 +578,13 @@ async function generateExcel() {
 
         const dateValue = inputDateEl?.value;
         worksheet.getCell('B2').value = dateValue ? dateValue.split('-').reverse().join('.') : '';
-        worksDheet.getCell('A7').value = inputEngineModelEl?.value || '';
+        // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+        worksheet.getCell('A7').value = inputEngineModelEl?.value || ''; // Было worksDheet
         const price = inputAmountEl ? parseFloat(inputAmountEl.value) : NaN;
         if (!isNaN(price)) {
             worksheet.getCell('E7').value = price;
-            worksBheet.getCell('F7').value = price;
+            // --- И ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+            worksheet.getCell('F7').value = price; // Было worksBheet
         }
         const buffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([buffer]), createFileName().replace('.pdf','.xlsx'));
