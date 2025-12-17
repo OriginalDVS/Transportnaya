@@ -19,9 +19,9 @@
         .background-image { display: block; width: 100%; height: auto; }
         .data-field { position: absolute; font-family: Arial, sans-serif; color: black; }
 
-        /* Specific styles for ATEK/Newline fields */
-        #a_fio, #nl_fio { white-space: normal; word-wrap: break-word; line-height: 1.2; }
-        #a_shapka, #a_dvs, #nl_shapka, #nl_dvs { white-space: nowrap; }
+        /* Specific styles */
+        #a_fio, #nl_fio, #s_recipient, #s_order { white-space: normal; word-wrap: break-word; line-height: 1.2; }
+        #a_shapka, #a_dvs, #nl_shapka, #nl_dvs, #s_act, #s_engine { white-space: nowrap; }
         .custom-underline { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 7px; }
 
     </style>
@@ -39,7 +39,6 @@
 
         <div id="selection-screen">
             <h2 class="text-xl font-semibold mb-4 text-center border-b pb-2">Выберите операцию</h2>
-            <!-- Изменена сетка на 2x2 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div id="select-baikal" class="bg-blue-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-600 transition-colors">
                     <h3 class="text-xl font-bold">Байкал Сервис</h3>
@@ -48,12 +47,14 @@
                     <h3 class="text-xl font-bold">Фортуна</h3>
                 </div>
                 <div id="select-atek" class="bg-teal-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-teal-600 transition-colors">
-                    <!-- Изменено название АТЭК -->
                     <h3 class="text-xl font-bold">АТЭК (Краснодар)</h3>
                 </div>
-                <!-- Добавлена Новая Линия -->
                 <div id="select-newline" class="bg-sky-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-sky-600 transition-colors">
                     <h3 class="text-xl font-bold">Новая Линия (Махачкала)</h3>
+                </div>
+                <!-- Кнопка СЛТК -->
+                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors md:col-span-2">
+                    <h3 class="text-xl font-bold">СЛТК (Москва)</h3>
                 </div>
             </div>
         </div>
@@ -73,8 +74,8 @@
         <div id="baikal-container" class="render-container"><img id="baikal-background-image" class="background-image" src="" /></div>
         <div id="fortuna-container" class="render-container"><img id="fortuna-background-image" class="background-image" src="" /></div>
         <div id="atek-container" class="render-container"><img id="atek-background-image" class="background-image" src="" /></div>
-        <!-- Добавлен контейнер для Новой Линии -->
         <div id="newline-container" class="render-container"><img id="newline-background-image" class="background-image" src="" /></div>
+        <div id="sltk-container" class="render-container"><img id="sltk-background-image" class="background-image" src="" /></div>
     </div>
 
 <script>
@@ -83,6 +84,7 @@ const { jsPDF } = window.jspdf;
 let excelTemplateFile = null;
 
 // --- TEMPLATE DATA ---
+
 const baikalTemplateData = [
     {"id":"b_doc_num", "top":"6.36%", "left":"68.00%","width":"11.00%","fontSize":"11.5pt","fontWeight":"bold"},
     {"id":"b_fio", "top":"38.42%","left":"10.25%","width":"82.50%","fontSize":"11.5pt","fontWeight":"bold"},
@@ -90,94 +92,21 @@ const baikalTemplateData = [
     {"id":"b_exp_day", "top":"65.18%","left":"53.00%","width":"4.00%", "fontSize":"12pt"},
     {"id":"b_exp_month", "top":"65.09%","left":"58.88%","width":"19.00%","fontSize":"12pt"},
     {"id":"b_exp_year", "top":"65.11%","left":"79.13%","width":"4.50%", "fontSize":"13pt"},
-    // --- ИЗМЕНЕНИЕ ЗДЕСЬ: Дата выдачи смещена ---
     {"id":"b_issue_day", "top":"12.39%","left":"68.83%","width":"4.00%", "fontSize":"12pt"},
     {"id":"b_issue_month","top":"12.30%","left":"74.33%","width":"13.00%","fontSize":"12pt"},
     {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
 const fortunaTemplateData = [
-    {
-        "id": "f_fio",
-        "top": "16.3%", 
-        "left": "7.25%",
-        "width": "34.38%",
-        "fontSize": "7.8pt",
-        "fontWeight": "normal",
-        "align": "center"
-    },
-    {
-        "id": "f_doc_num",
-        "top": "24.95%", 
-        "left": "46.75%",
-        "width": "14.00%",
-        "fontSize": "8pt",
-        "fontWeight": "normal",
-        "align": "center"
-    },
-    {
-        "id": "f_date",
-        "top": "24.95%", 
-        "left": "60.50%",
-        "width": "13.25%",
-        "fontSize": "8pt",
-        "fontWeight": "normal",
-        "align": "center"
-    },
-    {
-        "id": "f_engine",
-        "top": "37.40%", 
-        "left": "10.80%", 
-        "width": "11.88%",
-        "fontSize": "6pt",
-        "fontWeight": "normal",
-        "align": "left"
-    },
-    {
-        "id": "f_price1",
-        "top": "37.40%", 
-        "left": "53.60%", 
-        "width": "6.88%",
-        "fontSize": "6pt",
-        "fontWeight": "normal",
-        "align": "right"
-    },
-    {
-        "id": "f_price2",
-        "top": "37.40%", 
-        "left": "60.25%", 
-        "width": "7.12%",
-        "fontSize": "6pt",
-        "fontWeight": "normal",
-        "align": "right"
-    },
-    {
-        "id": "f_total1",
-        "top": "42.90%", 
-        "left": "60.25%", 
-        "width": "7.12%",
-        "fontSize": "6pt",
-        "fontWeight": "normal",
-        "align": "right"
-    },
-    {
-        "id": "f_total2",
-        "top": "43.95%", 
-        "left": "60.25%", 
-        "width": "7.12%",
-        "fontSize": "6pt",
-        "fontWeight": "normal",
-        "align": "right"
-    },
-    {
-        "id": "f_city",
-        "top": "10.95%", 
-        "left": "7.00%",
-        "width": "14.00%",
-        "fontSize": "8pt",
-        "fontWeight": "normal",
-        "align": "left"
-    }
+    { "id": "f_fio", "top": "16.3%", "left": "7.25%", "width": "34.38%", "fontSize": "7.8pt", "fontWeight": "normal", "align": "center" },
+    { "id": "f_doc_num", "top": "24.95%", "left": "46.75%", "width": "14.00%", "fontSize": "8pt", "fontWeight": "normal", "align": "center" },
+    { "id": "f_date", "top": "24.95%", "left": "60.50%", "width": "13.25%", "fontSize": "8pt", "fontWeight": "normal", "align": "center" },
+    { "id": "f_engine", "top": "37.40%", "left": "10.80%", "width": "11.88%", "fontSize": "6pt", "fontWeight": "normal", "align": "left" },
+    { "id": "f_price1", "top": "37.40%", "left": "53.60%", "width": "6.88%", "fontSize": "6pt", "fontWeight": "normal", "align": "right" },
+    { "id": "f_price2", "top": "37.40%", "left": "60.25%", "width": "7.12%", "fontSize": "6pt", "fontWeight": "normal", "align": "right" },
+    { "id": "f_total1", "top": "42.90%", "left": "60.25%", "width": "7.12%", "fontSize": "6pt", "fontWeight": "normal", "align": "right" },
+    { "id": "f_total2", "top": "43.95%", "left": "60.25%", "width": "7.12%", "fontSize": "6pt", "fontWeight": "normal", "align": "right" },
+    { "id": "f_city", "top": "10.95%", "left": "7.00%", "width": "14.00%", "fontSize": "8pt", "fontWeight": "normal", "align": "left" }
 ];
 
 const atekTemplateData = [
@@ -186,31 +115,36 @@ const atekTemplateData = [
     { "id": "a_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
 ];
 
-// --- Добавлены данные для Новой Линии (копия АТЭК с префиксом nl_) ---
 const newlineTemplateData = [
     { "id": "nl_fio", "top": "21.82%", "left": "30.80%", "width": "51.00%", "fontSize": "12pt", "align": "left", "fontWeight": "normal" },
     { "id": "nl_shapka", "top": "9.75%", "left": "13.3%", "width": "68.38%", "fontSize": "12pt", "align": "left", "fontWeight": "bold" },
     { "id": "nl_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
 ];
 
+// --- ДАННЫЕ ДЛЯ СЛТК (Финализированные) ---
+const sltkTemplateData = [
+    { "id": "s_recipient", "top": "12.41%", "left": "18.81%", "width": "71.00%", "fontSize": "9pt", "align": "left", "fontWeight": "bold" },
+    { "id": "s_engine", "top": "20.54%", "left": "12.73%", "width": "43.88%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "s_order", "top": "20.64%", "left": "78.42%", "width": "16.38%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "s_act", "top": "4.08%", "left": "7.75%", "width": "87.13%", "fontSize": "13.5pt", "align": "left", "fontWeight": "bold" }
+];
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    if (document.getElementById('baikal-container')) {
-        populateRenderContainer('baikal-container', baikalTemplateData);
-    } else { console.error("Container 'baikal-container' not found"); }
-    
-    if (document.getElementById('fortuna-container')) {
-        populateRenderContainer('fortuna-container', fortunaTemplateData);
-    } else { console.error("Container 'fortuna-container' not found"); }
-    
-    if (document.getElementById('atek-container')) {
-        populateRenderContainer('atek-container', atekTemplateData);
-    } else { console.error("Container 'atek-container' not found"); }
+    // Инициализация контейнеров
+    const containers = [
+        { id: 'baikal-container', data: baikalTemplateData },
+        { id: 'fortuna-container', data: fortunaTemplateData },
+        { id: 'atek-container', data: atekTemplateData },
+        { id: 'newline-container', data: newlineTemplateData },
+        { id: 'sltk-container', data: sltkTemplateData }
+    ];
 
-    if (document.getElementById('newline-container')) {
-        populateRenderContainer('newline-container', newlineTemplateData);
-    } else { console.error("Container 'newline-container' not found"); }
+    containers.forEach(c => {
+        if (document.getElementById(c.id)) {
+            populateRenderContainer(c.id, c.data);
+        }
+    });
 
     setupNavigation();
 
@@ -219,90 +153,94 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         document.getElementById('loading-text').textContent = 'Ошибка загрузки шаблонов!';
         console.error("Error during loadAllTemplates:", error);
-        alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12) для подробностей.');
+        alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12).');
     } finally {
         hideLoading(); 
     }
 });
 
 function setupNavigation() {
-    const baikalBtn = document.getElementById('select-baikal');
-    const fortunaBtn = document.getElementById('select-fortuna');
-    const atekBtn = document.getElementById('select-atek');
-    const newlineBtn = document.getElementById('select-newline'); // Добавлена кнопка
+    const bindNav = (id, type) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', () => showFormScreen(type));
+    };
+
+    bindNav('select-baikal', 'baikal');
+    bindNav('select-fortuna', 'fortuna');
+    bindNav('select-atek', 'atek');
+    bindNav('select-newline', 'newline');
+    bindNav('select-sltk', 'sltk');
+
     const backBtn = document.getElementById('back-to-selection');
-
-    if (baikalBtn) baikalBtn.addEventListener('click', () => showFormScreen('baikal'));
-    else console.error("Button 'select-baikal' not found");
-    
-    if (fortunaBtn) fortunaBtn.addEventListener('click', () => showFormScreen('fortuna'));
-    else console.error("Button 'select-fortuna' not found");
-
-    if (atekBtn) atekBtn.addEventListener('click', () => showFormScreen('atek'));
-    else console.error("Button 'select-atek' not found");
-    
-    if (newlineBtn) newlineBtn.addEventListener('click', () => showFormScreen('newline')); // Добавлен слушатель
-    else console.error("Button 'select-newline' not found");
-
     if (backBtn) backBtn.addEventListener('click', showSelectionScreen);
-    else console.error("Button 'back-to-selection' not found");
 }
 
 // --- UI FLOW CONTROL ---
 function showSelectionScreen() {
-    const formCont = document.getElementById('form-container');
-    const selScreen = document.getElementById('selection-screen');
-    if (formCont) formCont.classList.add('hidden');
-    if (selScreen) selScreen.classList.remove('hidden');
+    document.getElementById('form-container').classList.add('hidden');
+    document.getElementById('selection-screen').classList.remove('hidden');
 }
 
 function showFormScreen(type) {
-    const selScreen = document.getElementById('selection-screen');
-    const formCont = document.getElementById('form-container');
-    if (selScreen) selScreen.classList.add('hidden');
-    if (formCont) formCont.classList.remove('hidden');
+    document.getElementById('selection-screen').classList.add('hidden');
+    document.getElementById('form-container').classList.remove('hidden');
 
     const form = document.getElementById('data-form');
     const buttons = document.getElementById('generator-buttons');
     const formTitleEl = document.getElementById('form-title');
     
-    if (!form || !buttons || !formTitleEl) {
-        console.error("Form elements not found, cannot show form screen.");
-        return;
-    }
+    if (!form || !buttons || !formTitleEl) return;
 
-    let formHTML = `
-        <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
-        <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
-        <div><label for="input_city" class="block text-sm font-medium">Город</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Сургут"></div>
-        <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО получателя</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович"></div>
-        <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
-        <div><label for="input_amount" class="block text-sm font-medium">Цена</label><input type="number" id="input_amount" class="mt-1 block w-full p-2 border rounded-md" placeholder="185000"></div>
-    `;
+    let formHTML = '';
     let buttonsHTML = '';
     let formTitle = '';
 
+    // Общие поля для большинства, но СЛТК имеет свои особенности
     if (type === 'baikal') {
         formTitle = 'Данные для "Байкал Сервис"';
-        formHTML += `<div><label for="input_recipient_id" class="block text-sm font-medium">Данные получателя (паспорт/ВУ)</label><textarea id="input_recipient_id" rows="3" class="mt-1 block w-full p-2 border rounded-md" placeholder="паспорт 00 00 123456..."></textarea></div>`;
+        formHTML = `
+            <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
+            <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
+            <div><label for="input_city" class="block text-sm font-medium">Город</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Сургут"></div>
+            <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО получателя</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович"></div>
+            <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
+            <div><label for="input_amount" class="block text-sm font-medium">Цена</label><input type="number" id="input_amount" class="mt-1 block w-full p-2 border rounded-md" placeholder="185000"></div>
+            <div><label for="input_recipient_id" class="block text-sm font-medium">Данные получателя (паспорт/ВУ)</label><textarea id="input_recipient_id" rows="3" class="mt-1 block w-full p-2 border rounded-md" placeholder="паспорт 00 00 123456..."></textarea></div>
+        `;
         buttonsHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button id="generate-baikal-pdf" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700">Скачать Доверенность (PDF)</button><button id="generate-excel" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700">Скачать Расход (Excel)</button></div>`;
     } else if (type === 'fortuna') {
         formTitle = 'Данные для "Фортуна"';
+        formHTML = `
+            <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="12345"></div>
+            <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
+            <div><label for="input_city" class="block text-sm font-medium">Город</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Сургут"></div>
+            <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО получателя</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович"></div>
+            <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
+            <div><label for="input_amount" class="block text-sm font-medium">Цена</label><input type="number" id="input_amount" class="mt-1 block w-full p-2 border rounded-md" placeholder="185000"></div>
+        `;
         buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Создать акт выдачи</button>`;
-    } else if (type === 'atek' || type === 'newline') { // Объединяем логику ATEK и Newline
+    } else if (type === 'atek' || type === 'newline') {
         formTitle = type === 'atek' ? 'Данные для "АТЭК (Краснодар)"' : 'Данные для "Новая Линия (Махачкала)"';
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю030"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
-             <div><label for="input_city" class="block text-sm font-medium">Город (для названия файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Город"></div>
+             <div><label for="input_city" class="block text-sm font-medium">Город (для названия файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Сургут"></div>
             <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО и паспортные данные</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, паспорт..."></div>
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
         `;
-        if (type === 'atek') {
-            buttonsHTML = `<button id="generate-atek-pdf" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">Скачать Заявку (PDF)</button>`;
-        } else {
-            buttonsHTML = `<button id="generate-newline-pdf" class="w-full bg-sky-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-700">Скачать Заявку (PDF)</button>`;
-        }
+        const btnColor = type === 'atek' ? 'teal' : 'sky';
+        const funcId = type === 'atek' ? 'generate-atek-pdf' : 'generate-newline-pdf';
+        buttonsHTML = `<button id="${funcId}" class="w-full bg-${btnColor}-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-${btnColor}-700">Скачать Заявку (PDF)</button>`;
+    } else if (type === 'sltk') {
+        formTitle = 'Данные для "СЛТК (Москва)"';
+        formHTML = `
+            <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="12345"></div>
+            <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
+            <div><label for="input_recipient_data" class="block text-sm font-medium">Данные получателя (ФИО + Паспорт/ВУ)</label><textarea id="input_recipient_data" rows="4" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, паспорт 00 00 123456..."></textarea></div>
+            <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
+            <div><label for="input_city" class="block text-sm font-medium">Город (для имени файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Москва"></div>
+        `;
+        buttonsHTML = `<button id="generate-sltk-pdf" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700">Скачать Заявку (PDF)</button>`;
     }
 
     formTitleEl.innerText = formTitle;
@@ -313,25 +251,15 @@ function showFormScreen(type) {
     
     buttons.innerHTML = buttonsHTML;
 
-    // Reattach event listeners after updating innerHTML
+    // Event listeners
     if (type === 'baikal') {
-        const baikalPdfBtn = document.getElementById('generate-baikal-pdf');
-        const excelBtn = document.getElementById('generate-excel');
-        if (baikalPdfBtn) baikalPdfBtn.addEventListener('click', generateBaikalPdf);
-        if (excelBtn) excelBtn.addEventListener('click', generateExcel);
+        document.getElementById('generate-baikal-pdf').addEventListener('click', generateBaikalPdf);
+        document.getElementById('generate-excel').addEventListener('click', generateExcel);
     }
-    if (type === 'fortuna') {
-        const fortunaPdfBtn = document.getElementById('generate-fortuna-pdf');
-        if (fortunaPdfBtn) fortunaPdfBtn.addEventListener('click', generateFortunaPdf);
-    }
-    if (type === 'atek') {
-         const atekPdfBtn = document.getElementById('generate-atek-pdf');
-         if (atekPdfBtn) atekPdfBtn.addEventListener('click', generateAtekPdf);
-    }
-    if (type === 'newline') {
-         const newlinePdfBtn = document.getElementById('generate-newline-pdf');
-         if (newlinePdfBtn) newlinePdfBtn.addEventListener('click', generateNewlinePdf);
-    }
+    if (type === 'fortuna') document.getElementById('generate-fortuna-pdf').addEventListener('click', generateFortunaPdf);
+    if (type === 'atek') document.getElementById('generate-atek-pdf').addEventListener('click', generateAtekPdf);
+    if (type === 'newline') document.getElementById('generate-newline-pdf').addEventListener('click', generateNewlinePdf);
+    if (type === 'sltk') document.getElementById('generate-sltk-pdf').addEventListener('click', generateSltkPdf);
 }
 
 // --- FILE HANDLING ---
@@ -344,11 +272,7 @@ async function loadFile(url, type, elementId) {
     if (type === 'image') {
         const blob = await response.blob();
         const el = document.getElementById(elementId);
-        if (el) {
-            el.src = URL.createObjectURL(blob);
-        } else {
-            console.error(`Element with ID "${elementId}" not found for image.`);
-        }
+        if (el) el.src = URL.createObjectURL(blob);
     } else { // excel
         return await response.arrayBuffer();
     }
@@ -359,44 +283,37 @@ async function loadAllTemplates() {
         loadFile('./baikal.jpg', 'image', 'baikal-background-image'),
         loadFile('./fortuna.jpg', 'image', 'fortuna-background-image'),
         loadFile('./atek.jpg', 'image', 'atek-background-image'),
-        loadFile('./newline.jpg', 'image', 'newline-background-image') // Добавлен newline.jpg
+        loadFile('./newline.jpg', 'image', 'newline-background-image'),
+        loadFile('./sltk.jpg', 'image', 'sltk-background-image')
     ]);
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
 }
 
-
 // --- DOCUMENT GENERATION ---
 function createFileName() {
-    const dateValue = document.getElementById('input_date')?.value;
+    const dateValue = document.getElementById('input_date').value;
     const datePart = dateValue ? dateValue.split('-').reverse().join('.') : '';
     const cityPart = document.getElementById('input_city')?.value || '';
     const enginePart = document.getElementById('input_engine_model')?.value || '';
-    const fullName = document.getElementById('input_recipient_name')?.value || '';
-    const lastNamePart = fullName ? fullName.split(' ')[0] : '';
+    // Для СЛТК используем input_recipient_data, для остальных input_recipient_name
+    const recipientVal = document.getElementById('input_recipient_name')?.value || document.getElementById('input_recipient_data')?.value || '';
+    const lastNamePart = recipientVal ? recipientVal.split(' ')[0] : '';
     return [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ') + '.pdf';
 }
 
 async function generatePdfFor(containerId) {
     const container = document.getElementById(containerId);
-    if (!container) {
-         alert(`Ошибка: Не найден контейнер ${containerId}`);
-         return;
-    }
     const image = container.querySelector('.background-image');
-    if (!image) {
-         alert(`Ошибка: Не найдено фоновое изображение в ${containerId}`);
-         return;
-    }
 
     if (!image.src || image.naturalWidth === 0) {
-        let fileName = containerId.replace('-container','.jpg');
-        alert(`Шаблон для этого документа (${fileName}) не загружен. Убедитесь, что файл ${fileName} есть в репозитории и обновите страницу.`);
+        let fname = containerId.replace('-container','.jpg');
+        alert(`Шаблон ${fname} не загружен. Проверьте файлы в репозитории.`);
         return;
     }
 
     showLoading('Подготовка PDF...');
     try {
-        await new Promise(r => setTimeout(r, 100)); // Allow time for rendering
+        await new Promise(r => setTimeout(r, 100));
         const canvas = await html2canvas(container, { scale: 3, useCORS: true });
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
@@ -404,7 +321,6 @@ async function generatePdfFor(containerId) {
         pdf.save(createFileName());
     } catch (error) {
         alert("Ошибка при создании PDF: " + error.message);
-        console.error("PDF Generation Error:", error);
     } finally {
         hideLoading();
     }
@@ -414,196 +330,145 @@ async function generatePdfFor(containerId) {
 const generateBaikalPdf = () => { updateBaikalDocument(); generatePdfFor('baikal-container'); };
 const generateFortunaPdf = () => { updateFortunaDocument(); generatePdfFor('fortuna-container'); };
 const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-container'); };
-const generateNewlinePdf = () => { updateNewlineDocument(); generatePdfFor('newline-container'); }; // Добавлена функция
+const generateNewlinePdf = () => { updateNewlineDocument(); generatePdfFor('newline-container'); };
+const generateSltkPdf = () => { updateSltkDocument(); generatePdfFor('sltk-container'); };
 
 // --- Document Update Functions ---
 function updateBaikalDocument() {
-    const docNumEl = document.getElementById('b_doc_num');
-    const fioEl = document.getElementById('b_fio');
-    const passportEl = document.getElementById('b_passport');
-    const inputDocNumEl = document.getElementById('input_doc_num');
-    const inputRecipientNameEl = document.getElementById('input_recipient_name');
-    const inputRecipientIdEl = document.getElementById('input_recipient_id');
-    const inputDateEl = document.getElementById('input_date');
+    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+    setText('b_doc_num', document.getElementById('input_doc_num').value);
+    setText('b_fio', document.getElementById('input_recipient_name').value);
+    setText('b_passport', document.getElementById('input_recipient_id').value);
 
-    if (docNumEl && inputDocNumEl) docNumEl.innerText = inputDocNumEl.value;
-    if (fioEl && inputRecipientNameEl) fioEl.innerText = inputRecipientNameEl.value;
-    if (passportEl && inputRecipientIdEl) passportEl.innerText = inputRecipientIdEl.value || '';
-    
-    if (inputDateEl && inputDateEl.value) {
-        const dateValue = inputDateEl.value;
+    const dateValue = document.getElementById('input_date').value;
+    if (dateValue) {
         const d = new Date(dateValue);
         const months = ["Января","Февраля","Марта","Апреля","Мая","Июня","Июля","Августа","Сентября","Октября","Ноября","Декабря"];
         const day = String(d.getDate()).padStart(2, '0');
         const month = months[d.getMonth()];
         const year = String(d.getFullYear()).slice(2);
-        
-        ['b_issue_day', 'b_exp_day'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.innerText = day;
-        });
-        ['b_issue_month', 'b_exp_month'].forEach(id => {
-             const el = document.getElementById(id);
-             if (el) el.innerText = month;
-        });
-        ['b_issue_year', 'b_exp_year'].forEach(id => {
-             const el = document.getElementById(id);
-             if (el) el.innerText = year;
-        });
+        ['b_issue_day', 'b_exp_day'].forEach(id => setText(id, day));
+        ['b_issue_month', 'b_exp_month'].forEach(id => setText(id, month));
+        ['b_issue_year', 'b_exp_year'].forEach(id => setText(id, year));
     }
 }
-function updateFortunaDocument() {
-    const inputDateEl = document.getElementById('input_date');
-    const inputAmountEl = document.getElementById('input_amount');
-    const inputCityEl = document.getElementById('input_city');
-    const inputRecipientNameEl = document.getElementById('input_recipient_name');
-    const inputDocNumEl = document.getElementById('input_doc_num');
-    const inputEngineModelEl = document.getElementById('input_engine_model');
 
-    const dateValue = inputDateEl?.value;
+function updateFortunaDocument() {
+    const dateValue = document.getElementById('input_date').value;
     const formattedDate = dateValue ? dateValue.split('-').reverse().join('.') : '';
-    const price = inputAmountEl ? parseFloat(inputAmountEl.value) : NaN;
+    const priceInput = document.getElementById('input_amount');
+    const price = priceInput ? parseFloat(priceInput.value) : NaN;
     const formattedPrice = !isNaN(price) ? price.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00';
     
-    const cityEl = document.getElementById('f_city');
-    const fioEl = document.getElementById('f_fio');
-    const docNumEl = document.getElementById('f_doc_num');
-    const dateEl = document.getElementById('f_date');
-    const engineEl = document.getElementById('f_engine');
-
-    if (cityEl && inputCityEl) cityEl.innerText = inputCityEl.value;
-    if (fioEl && inputRecipientNameEl) fioEl.innerText = inputRecipientNameEl.value;
-    if (docNumEl && inputDocNumEl) docNumEl.innerText = inputDocNumEl.value;
-    if (dateEl) dateEl.innerText = formattedDate;
-    if (engineEl && inputEngineModelEl) engineEl.innerText = inputEngineModelEl.value;
-    
-    ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.innerText = formattedPrice;
-    });
+    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+    setText('f_city', document.getElementById('input_city').value);
+    setText('f_fio', document.getElementById('input_recipient_name').value);
+    setText('f_doc_num', document.getElementById('input_doc_num').value);
+    setText('f_date', formattedDate);
+    setText('f_engine', document.getElementById('input_engine_model').value);
+    ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => setText(id, formattedPrice));
 }
 
 function updateAtekDocument() {
-    const inputRecipientNameEl = document.getElementById('input_recipient_name');
-    const inputEngineModelEl = document.getElementById('input_engine_model');
-    const inputDateEl = document.getElementById('input_date');
-    const inputDocNumEl = document.getElementById('input_doc_num');
-    const fioEl = document.getElementById('a_fio');
-    const dvsEl = document.getElementById('a_dvs');
-    const shapkaEl = document.getElementById('a_shapka');
+    const fio = document.getElementById('input_recipient_name').value;
+    const dvs = document.getElementById('input_engine_model').value;
+    document.getElementById('a_fio').textContent = fio;
+    document.getElementById('a_dvs').textContent = dvs;
 
-    const fio = inputRecipientNameEl?.value || '';
-    const dvs = inputEngineModelEl?.value || '';
-    
-    if (fioEl) fioEl.textContent = fio;
-    if (dvsEl) dvsEl.textContent = dvs;
-
-    const date = new Date(inputDateEl?.value || new Date());
+    const date = new Date(document.getElementById('input_date').value || new Date());
     const day = date.getDate().toString();
     const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     const month = genitiveMonths[date.getMonth()];
     const year = date.getFullYear();
-    const docNum = inputDocNumEl?.value || '';
-    
-    if (shapkaEl) shapkaEl.innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
+    const docNum = document.getElementById('input_doc_num').value;
+    document.getElementById('a_shapka').innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
 }
 
-// Добавлена функция для Новой Линии
 function updateNewlineDocument() {
-    const inputRecipientNameEl = document.getElementById('input_recipient_name');
-    const inputEngineModelEl = document.getElementById('input_engine_model');
-    const inputDateEl = document.getElementById('input_date');
-    const inputDocNumEl = document.getElementById('input_doc_num');
-    const fioEl = document.getElementById('nl_fio');
-    const dvsEl = document.getElementById('nl_dvs');
-    const shapkaEl = document.getElementById('nl_shapka');
+    const fio = document.getElementById('input_recipient_name').value;
+    const dvs = document.getElementById('input_engine_model').value;
+    document.getElementById('nl_fio').textContent = fio;
+    document.getElementById('nl_dvs').textContent = dvs;
 
-    const fio = inputRecipientNameEl?.value || '';
-    const dvs = inputEngineModelEl?.value || '';
-    
-    if (fioEl) fioEl.textContent = fio;
-    if (dvsEl) dvsEl.textContent = dvs;
-
-    const date = new Date(inputDateEl?.value || new Date());
+    const date = new Date(document.getElementById('input_date').value || new Date());
     const day = date.getDate().toString();
     const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     const month = genitiveMonths[date.getMonth()];
     const year = date.getFullYear();
-    const docNum = inputDocNumEl?.value || '';
+    const docNum = document.getElementById('input_doc_num').value;
+    document.getElementById('nl_shapka').innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
+}
+
+function updateSltkDocument() {
+    const docNum = document.getElementById('input_doc_num').value;
+    const recipientData = document.getElementById('input_recipient_data').value;
+    const engine = document.getElementById('input_engine_model').value;
+    const dateInput = document.getElementById('input_date').value;
     
-    if (shapkaEl) shapkaEl.innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
+    const date = new Date(dateInput || new Date());
+    const day = date.getDate().toString();
+    const dd = date.getDate().toString().padStart(2, '0');
+    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const monthName = genitiveMonths[date.getMonth()];
+
+    document.getElementById('s_recipient').textContent = recipientData;
+    document.getElementById('s_engine').textContent = engine;
+    document.getElementById('s_act').textContent = `Акт возврата товара № ${docNum} от ${day} ${monthName} ${yyyy} г.`;
+    document.getElementById('s_order').textContent = `Заказ покупателя № ${docNum} от ${dd}.${mm}.${yyyy} г.`;
 }
 
 // --- Helper Functions ---
 function populateRenderContainer(containerId, data) {
     const container = document.getElementById(containerId);
-     if (!container) {
-        console.error(`Container with ID "${containerId}" not found in populateRenderContainer.`);
-        return; 
-    }
     container.querySelectorAll('.data-field').forEach(el => el.remove());
-    
     data.forEach(item => {
-        if (!item.id || typeof item.id !== 'string') {
-            console.error(`Invalid or missing ID in template data for container "${containerId}":`, item);
-            return; 
-        }
         const field = document.createElement('div');
         field.id = item.id;
         field.className = 'data-field';
-        field.style.top = item.top || '0%';
-        field.style.left = item.left || '0%';
-        field.style.width = item.width || 'auto';
-        field.style.fontSize = item.fontSize || '10pt';
-        field.style.fontWeight = item.fontWeight || 'normal';
-        field.style.textAlign = item.align || 'left';
+        field.style.top = item.top;
+        field.style.left = item.left;
+        field.style.width = item.width;
+        field.style.fontSize = item.fontSize;
+        field.style.fontWeight = item.fontWeight;
+        field.style.textAlign = item.align;
         container.appendChild(field);
     });
 }
 
 async function generateExcel() {
-    if (!excelTemplateFile) {
-        alert("Шаблон Excel (baikal_rashod.xlsx) еще не загружен или не найден. Пожалуйста, подождите или проверьте наличие файла.");
-        return;
-    }
+    if (!excelTemplateFile) return;
     showLoading('Подготовка Excel...');
     try {
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(excelTemplateFile); 
+        await workbook.xlsx.load(excelTemplateFile);
         const worksheet = workbook.getWorksheet(1);
         
-        const inputDateEl = document.getElementById('input_date');
-        const inputEngineModelEl = document.getElementById('input_engine_model');
-        const inputAmountEl = document.getElementById('input_amount');
-
-        const dateValue = inputDateEl?.value;
+        const dateValue = document.getElementById('input_date').value;
         worksheet.getCell('B2').value = dateValue ? dateValue.split('-').reverse().join('.') : '';
-        // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-        worksheet.getCell('A7').value = inputEngineModelEl?.value || ''; // Было worksDheet
-        const price = inputAmountEl ? parseFloat(inputAmountEl.value) : NaN;
+        worksheet.getCell('A7').value = document.getElementById('input_engine_model').value;
+        
+        const price = parseFloat(document.getElementById('input_amount').value);
         if (!isNaN(price)) {
             worksheet.getCell('E7').value = price;
-            // --- И ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-            worksheet.getCell('F7').value = price; // Было worksBheet
+            worksheet.getCell('F7').value = price;
         }
         const buffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([buffer]), createFileName().replace('.pdf','.xlsx'));
     } catch (error) {
-        alert("Ошибка при создании Excel файла: " + error.message);
-        console.error("Excel generation error:", error);
+        alert("Ошибка Excel: " + error.message);
     } finally {
         hideLoading();
     }
 }
 function showLoading(message) {
-    const loadingText = document.getElementById('loading-text');
-    const overlay = document.getElementById('loading-overlay');
-    if (loadingText) loadingText.textContent = message || 'Загрузка...';
-    if (overlay) overlay.classList.remove('hidden');
+    const el = document.getElementById('loading-text');
+    if (el) el.textContent = message || 'Загрузка...';
+    document.getElementById('loading-overlay').classList.remove('hidden');
 }
 function hideLoading() {
-     const overlay = document.getElementById('loading-overlay');
-     if (overlay) overlay.classList.add('hidden');
+    document.getElementById('loading-overlay').classList.add('hidden');
 }
 </script>
 
