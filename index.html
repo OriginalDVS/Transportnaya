@@ -121,11 +121,10 @@ const newlineTemplateData = [
     { "id": "nl_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
 ];
 
-// --- ДАННЫЕ ДЛЯ СЛТК (Финализированные) ---
+// --- ДАННЫЕ ДЛЯ СЛТК ---
 const sltkTemplateData = [
     { "id": "s_recipient", "top": "12.41%", "left": "18.81%", "width": "71.00%", "fontSize": "9pt", "align": "left", "fontWeight": "bold" },
     { "id": "s_engine", "top": "20.54%", "left": "12.73%", "width": "43.88%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    // ИЗМЕНЕНИЕ ЗДЕСЬ: fontSize 7pt (был 8pt)
     { "id": "s_order", "top": "20.64%", "left": "78.42%", "width": "16.38%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
     { "id": "s_act", "top": "4.08%", "left": "7.75%", "width": "87.13%", "fontSize": "13.5pt", "align": "left", "fontWeight": "bold" }
 ];
@@ -339,7 +338,24 @@ function updateBaikalDocument() {
     const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
     setText('b_doc_num', document.getElementById('input_doc_num').value);
     setText('b_fio', document.getElementById('input_recipient_name').value);
-    setText('b_passport', document.getElementById('input_recipient_id').value);
+    
+    // --- АВТОМАТИЧЕСКАЯ АДАПТАЦИЯ ПАСПОРТНЫХ ДАННЫХ ---
+    const passportVal = document.getElementById('input_recipient_id').value || '';
+    const passportEl = document.getElementById('b_passport');
+    if (passportEl) {
+        passportEl.innerText = passportVal;
+        // Если текст длинный (>65 символов), уменьшаем шрифт и поднимаем блок
+        if (passportVal.length > 65) {
+             passportEl.style.fontSize = "9pt";
+             passportEl.style.top = "43.2%"; // Поднимаем выше (было 43.89%)
+             passportEl.style.lineHeight = "1.1";
+        } else {
+             // Возвращаем стандартные значения
+             passportEl.style.fontSize = "11.5pt";
+             passportEl.style.top = "43.89%";
+             passportEl.style.lineHeight = "normal";
+        }
+    }
 
     const dateValue = document.getElementById('input_date').value;
     if (dateValue) {
