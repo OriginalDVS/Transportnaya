@@ -44,7 +44,7 @@
                     <h3 class="text-xl font-bold">Байкал Сервис</h3>
                 </div>
                 <div id="select-baikal-spb" class="bg-blue-700 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-800 transition-colors">
-                    <h3 class="text-xl font-bold">Байкал Сервис (СПБ)</h3>
+                    <h3 class="text-xl font-bold">Байкал Сервис (Санкт-Петербург)</h3>
                 </div>
                 <div id="select-fortuna" class="bg-purple-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-purple-600 transition-colors">
                     <h3 class="text-xl font-bold">Фортуна</h3>
@@ -105,29 +105,41 @@ const baikalTemplateData = [
 ];
 
 // --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
+// Расчеты в пикселях (примерно): 1% высоты ~11.3px, 1% ширины ~8px
+// 5px вверх = -0.44% top
+// 2px вправо = +0.25% left
+// 1.5px вверх = -0.13% top
+// 0.2px вправо = +0.025% left
+// 2px вниз = +0.18% top
+// 1px вниз = +0.09% top
 const baikalSpbDoverenostData = [
     { "id": "b_spb_d_doc_num", "top": "33.18%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
-    // Общая дата выдачи: Вернул координаты (37.08%, 21.41%)
-    { "id": "b_spb_d_date", "top": "37.08%", "left": "21.41%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    
+    // Общая дата выдачи: Вернул координаты (37.08%, 21.41%) -> Up 5px (-0.44%), Right 2px (+0.25%) -> 36.64%, 21.66%
+    { "id": "b_spb_d_date", "top": "36.64%", "left": "21.66%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    
     { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.35%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     
-    // Номер паспорта/ВУ (поднят выше)
+    // Номер паспорта/ВУ
     { "id": "b_spb_d_id_num", "top": "50.90%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
     
-    // Кем выдан (чуть увеличен отступ сверху, чтобы не накладывался)
-    { "id": "b_spb_d_issued_by", "top": "52.10%", "left": "19.21%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    // Кем выдан: 52.10%, 19.21% -> Up 1.5px (-0.13%), Right 0.2px (+0.025%) -> 51.97%, 19.235%
+    { "id": "b_spb_d_issued_by", "top": "51.97%", "left": "19.235%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     
-    // Дата выдачи документа: левее на 1px (20.86% -> 20.73%)
-    { "id": "b_spb_d_issue_date", "top": "53.04%", "left": "20.73%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_engine", "top": "63.15%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
+    // Дата выдачи документа: 53.04% -> Down 2px (+0.18%) -> 53.22%
+    { "id": "b_spb_d_issue_date", "top": "53.22%", "left": "20.73%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    
+    // Модель двигателя: 63.15% -> Down 1px (+0.09%) -> 63.24%
+    { "id": "b_spb_d_engine", "top": "63.24%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
+// Все в заявке ниже на 1.5px (+0.13%)
 const baikalSpbZayavkaData = [
-    { "id": "b_spb_z_doc_num", "top": "10.38%", "left": "19.73%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_z_date", "top": "12.17%", "left": "19.00%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_z_engine", "top": "21.22%", "left": "10.70%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_z_price", "top": "21.19%", "left": "69.80%", "width": "7.13%", "fontSize": "7.5pt", "align": "center", "fontWeight": "normal" },
-    { "id": "b_spb_z_sum", "top": "21.20%", "left": "76.97%", "width": "9.38%", "fontSize": "7pt", "align": "center", "fontWeight": "normal" }
+    { "id": "b_spb_z_doc_num", "top": "10.51%", "left": "19.73%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_date", "top": "12.30%", "left": "19.00%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_engine", "top": "21.35%", "left": "10.70%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_price", "top": "21.32%", "left": "69.80%", "width": "7.13%", "fontSize": "7.5pt", "align": "center", "fontWeight": "normal" },
+    { "id": "b_spb_z_sum", "top": "21.33%", "left": "76.97%", "width": "9.38%", "fontSize": "7pt", "align": "center", "fontWeight": "normal" }
 ];
 
 const fortunaTemplateData = [
@@ -244,11 +256,13 @@ function showFormScreen(type) {
         buttonsHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button id="generate-baikal-pdf" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700">Скачать Доверенность (PDF)</button><button id="generate-excel" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700">Скачать Расход (Excel)</button></div>`;
     } 
     else if (type === 'baikal-spb') {
-        formTitle = 'Данные для "Байкал Сервис (СПБ)"';
+        formTitle = 'Данные для "Байкал Сервис (Санкт-Петербург)"';
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
-             <div><label for="input_city" class="block text-sm font-medium">Город (для имени файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="СПБ"></div>
+             <!-- City removed, automatically set to Saint Petersburg -->
+             <input type="hidden" id="input_city" value="Санкт-Петербург">
+             
             <!-- Объединенное поле ФИО и Дата рождения -->
             <div><label for="input_recipient_fio_dob" class="block text-sm font-medium">ФИО и дата рождения</label><input type="text" id="input_recipient_fio_dob" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, 01.01.1990"></div>
             
@@ -504,9 +518,9 @@ function updateBaikalSpbDocument() {
     setText('b_spb_d_date', formatDate(dateInput));
     setText('b_spb_d_fio_dob', fioDob); // Прямая вставка без форматирования
     
-    // Номер паспорта/ВУ с префиксом. Жирный (bold) или 700.
+    // Номер паспорта/ВУ с префиксом. Убрали жирность (было font-weight: 700)
     const docPrefix = idType === 'passport' ? 'Паспорт' : 'Водительское удостоверение';
-    setHtml('b_spb_d_id_num', `<span style="font-weight: 700; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
+    setHtml('b_spb_d_id_num', `<span style="font-weight: normal; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
     
     setText('b_spb_d_issued_by', issuedBy);
     setText('b_spb_d_issue_date', idDateInput); // Используем введенное значение напрямую
