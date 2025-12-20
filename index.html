@@ -55,7 +55,8 @@
                 <div id="select-newline" class="bg-sky-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-sky-600 transition-colors">
                     <h3 class="text-xl font-bold">Новая Линия (Махачкала)</h3>
                 </div>
-                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors md:col-span-2">
+                <!-- Кнопка СЛТК теперь в общей сетке -->
+                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors">
                     <h3 class="text-xl font-bold">СЛТК (Москва)</h3>
                 </div>
             </div>
@@ -104,23 +105,27 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ (Доверенность: подняты на 5px / ~0.44%) ---
+// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
+// Доверенность: сдвиг вправо на 1.5px (+0.19%)
 const baikalSpbDoverenostData = [
-    { "id": "b_spb_d_doc_num", "top": "33.36%", "left": "51.48%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
-    { "id": "b_spb_d_date", "top": "36.64%", "left": "21.41%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.16%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_id_num", "top": "50.94%", "left": "11.85%", "width": "40.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_issued_by", "top": "51.92%", "left": "19.02%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_issue_date", "top": "53.01%", "left": "20.31%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_engine", "top": "63.15%", "left": "17.18%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
+    { "id": "b_spb_d_doc_num", "top": "33.36%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
+    { "id": "b_spb_d_date", "top": "36.64%", "left": "21.60%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.35%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    // Поле паспорта (id_num) будет заполняться HTML-ом для форматирования
+    { "id": "b_spb_d_id_num", "top": "50.94%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
+    { "id": "b_spb_d_issued_by", "top": "51.92%", "left": "19.21%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    // Дата выдачи: сдвиг вправо на 1.5px (базовый) + 5px (дополнительно) = +6.5px (~+0.81%) => 20.31 + 0.81 = 21.12
+    { "id": "b_spb_d_issue_date", "top": "53.01%", "left": "21.12%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_engine", "top": "63.15%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
+// Заявка: сдвиг вверх на 5px (-0.44%), вправо на 2px (+0.25%)
 const baikalSpbZayavkaData = [
-    { "id": "b_spb_z_doc_num", "top": "10.82%", "left": "19.48%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_z_date", "top": "12.61%", "left": "18.75%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_z_engine", "top": "21.66%", "left": "10.45%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_z_price", "top": "21.63%", "left": "69.55%", "width": "7.13%", "fontSize": "7.5pt", "align": "center", "fontWeight": "normal" },
-    { "id": "b_spb_z_sum", "top": "21.64%", "left": "76.72%", "width": "9.38%", "fontSize": "7pt", "align": "center", "fontWeight": "normal" }
+    { "id": "b_spb_z_doc_num", "top": "10.38%", "left": "19.73%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_date", "top": "12.17%", "left": "19.00%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_engine", "top": "21.22%", "left": "10.70%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_price", "top": "21.19%", "left": "69.80%", "width": "7.13%", "fontSize": "7.5pt", "align": "center", "fontWeight": "normal" },
+    { "id": "b_spb_z_sum", "top": "21.20%", "left": "76.97%", "width": "9.38%", "fontSize": "7pt", "align": "center", "fontWeight": "normal" }
 ];
 
 const fortunaTemplateData = [
@@ -147,7 +152,6 @@ const newlineTemplateData = [
     { "id": "nl_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
 ];
 
-// --- ДАННЫЕ ДЛЯ СЛТК ---
 const sltkTemplateData = [
     { "id": "s_recipient", "top": "12.41%", "left": "18.81%", "width": "71.00%", "fontSize": "9pt", "align": "left", "fontWeight": "bold" },
     { "id": "s_engine", "top": "20.54%", "left": "12.73%", "width": "43.88%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
@@ -491,13 +495,17 @@ function updateBaikalSpbDocument() {
     };
 
     // Заполнение Доверенности
-    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+    const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
 
     setText('b_spb_d_doc_num', docNum);
     setText('b_spb_d_date', formatDate(dateInput));
     setText('b_spb_d_fio_dob', `${fio}, ${formatDate(dob)}`);
     
-    setText('b_spb_d_id_num', idNumber); 
+    // Номер паспорта/ВУ с префиксом
+    const docPrefix = idType === 'passport' ? 'Паспорт' : 'Водительское удостоверение';
+    // Используем увеличенный шрифт для префикса (например 10pt)
+    setHtml('b_spb_d_id_num', `<span style="font-size: 10pt;">${docPrefix}</span>: ${idNumber}`); 
     
     setText('b_spb_d_issued_by', issuedBy);
     setText('b_spb_d_issue_date', formatDate(idDateInput));
