@@ -55,8 +55,7 @@
                 <div id="select-newline" class="bg-sky-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-sky-600 transition-colors">
                     <h3 class="text-xl font-bold">Новая Линия (Махачкала)</h3>
                 </div>
-                <!-- Кнопка СЛТК (убран col-span-2, теперь она встанет рядом с Новой Линией) -->
-                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors">
+                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors md:col-span-2">
                     <h3 class="text-xl font-bold">СЛТК (Москва)</h3>
                 </div>
             </div>
@@ -105,15 +104,15 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
+// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ (Доверенность: подняты на 5px / ~0.44%) ---
 const baikalSpbDoverenostData = [
-    { "id": "b_spb_d_doc_num", "top": "33.80%", "left": "51.48%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
-    { "id": "b_spb_d_date", "top": "37.08%", "left": "21.41%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_fio_dob", "top": "50.05%", "left": "26.16%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_id_num", "top": "51.38%", "left": "11.85%", "width": "40.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_issued_by", "top": "52.36%", "left": "19.02%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_issue_date", "top": "53.45%", "left": "20.31%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_engine", "top": "63.59%", "left": "17.18%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
+    { "id": "b_spb_d_doc_num", "top": "33.36%", "left": "51.48%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
+    { "id": "b_spb_d_date", "top": "36.64%", "left": "21.41%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.16%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_id_num", "top": "50.94%", "left": "11.85%", "width": "40.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_issued_by", "top": "51.92%", "left": "19.02%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_issue_date", "top": "53.01%", "left": "20.31%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_engine", "top": "63.15%", "left": "17.18%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
 const baikalSpbZayavkaData = [
@@ -263,7 +262,12 @@ function showFormScreen(type) {
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
             <div><label for="input_amount" class="block text-sm font-medium">Цена</label><input type="number" id="input_amount" class="mt-1 block w-full p-2 border rounded-md" placeholder="185000"></div>
         `;
-        buttonsHTML = `<button id="generate-baikal-spb-pdf" class="w-full bg-blue-800 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-900">Скачать Комплект (2 файла)</button>`;
+        buttonsHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button id="generate-baikal-spb-doverenost-pdf" class="w-full bg-blue-800 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-900">Скачать Доверенность</button>
+                <button id="generate-baikal-spb-zayavka-pdf" class="w-full bg-blue-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-800">Скачать Заявку</button>
+            </div>
+        `;
     }
     else if (type === 'fortuna') {
         formTitle = 'Данные для "Фортуна"';
@@ -314,7 +318,8 @@ function showFormScreen(type) {
         document.getElementById('generate-excel').addEventListener('click', generateExcel);
     }
     if (type === 'baikal-spb') {
-        document.getElementById('generate-baikal-spb-pdf').addEventListener('click', generateBaikalSpbPdf);
+        document.getElementById('generate-baikal-spb-doverenost-pdf').addEventListener('click', () => generateBaikalSpbSinglePdf('doverenost'));
+        document.getElementById('generate-baikal-spb-zayavka-pdf').addEventListener('click', () => generateBaikalSpbSinglePdf('zayavka'));
     }
     if (type === 'fortuna') document.getElementById('generate-fortuna-pdf').addEventListener('click', generateFortunaPdf);
     if (type === 'atek') document.getElementById('generate-atek-pdf').addEventListener('click', generateAtekPdf);
@@ -398,48 +403,37 @@ const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-conta
 const generateNewlinePdf = () => { updateNewlineDocument(); generatePdfFor('newline-container'); };
 const generateSltkPdf = () => { updateSltkDocument(); generatePdfFor('sltk-container'); };
 
-async function generateBaikalSpbPdf() {
-    const container1 = document.getElementById('baikal-spb-doverenost-container');
-    const container2 = document.getElementById('baikal-spb-zayavka-container');
+async function generateBaikalSpbSinglePdf(docType) {
+    // docType: 'doverenost' or 'zayavka'
+    const containerId = docType === 'doverenost' ? 'baikal-spb-doverenost-container' : 'baikal-spb-zayavka-container';
+    const container = document.getElementById(containerId);
     
-    // Проверка загрузки шаблонов
-    const img1 = container1.querySelector('img');
-    const img2 = container2.querySelector('img');
-    if (!img1.src || img1.naturalWidth === 0 || !img2.src || img2.naturalWidth === 0) {
-        alert("Шаблоны для Байкал СПБ не загружены. Проверьте файлы.");
+    const img = container.querySelector('img');
+    if (!img.src || img.naturalWidth === 0) {
+        alert("Шаблон не загружен.");
         return;
     }
 
-    showLoading('Генерация PDF файлов...');
-    updateBaikalSpbDocument();
+    showLoading('Генерация PDF...');
+    updateBaikalSpbDocument(); 
 
     try {
         await new Promise(r => setTimeout(r, 100));
+        const canvas = await html2canvas(container, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+        const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
         
-        // 1. Создание Доверенности
-        const canvas1 = await html2canvas(container1, { scale: 2, useCORS: true });
-        const imgData1 = canvas1.toDataURL('image/jpeg', 0.9);
-        const pdf1 = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
-        pdf1.addImage(imgData1, 'JPEG', 0, 0, pdf1.internal.pageSize.getWidth(), pdf1.internal.pageSize.getHeight());
-        // Сохраняем с префиксом
-        pdf1.save(createFileName('Доверенность'));
-
-        // 2. Создание Заявки
-        const canvas2 = await html2canvas(container2, { scale: 2, useCORS: true });
-        const imgData2 = canvas2.toDataURL('image/jpeg', 0.9);
-        const pdf2 = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
-        pdf2.addImage(imgData2, 'JPEG', 0, 0, pdf2.internal.pageSize.getWidth(), pdf2.internal.pageSize.getHeight());
-        // Сохраняем с префиксом
-        pdf2.save(createFileName('Заявка'));
-
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+        
+        const prefix = docType === 'doverenost' ? 'Доверенность' : 'Заявка';
+        pdf.save(createFileName(prefix));
     } catch (error) {
         console.error(error);
-        alert("Ошибка при создании PDF файлов");
+        alert("Ошибка при создании PDF");
     } finally {
         hideLoading();
     }
 }
-
 
 // --- Document Update Functions ---
 function updateBaikalDocument() {
