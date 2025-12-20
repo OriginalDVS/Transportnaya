@@ -43,6 +43,9 @@
                 <div id="select-baikal" class="bg-blue-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-600 transition-colors">
                     <h3 class="text-xl font-bold">Байкал Сервис</h3>
                 </div>
+                <div id="select-baikal-spb" class="bg-blue-700 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-800 transition-colors">
+                    <h3 class="text-xl font-bold">Байкал Сервис (СПБ)</h3>
+                </div>
                 <div id="select-fortuna" class="bg-purple-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-purple-600 transition-colors">
                     <h3 class="text-xl font-bold">Фортуна</h3>
                 </div>
@@ -52,8 +55,8 @@
                 <div id="select-newline" class="bg-sky-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-sky-600 transition-colors">
                     <h3 class="text-xl font-bold">Новая Линия (Махачкала)</h3>
                 </div>
-                <!-- Кнопка СЛТК -->
-                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors md:col-span-2">
+                <!-- Кнопка СЛТК (убран col-span-2, теперь она встанет рядом с Новой Линией) -->
+                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors">
                     <h3 class="text-xl font-bold">СЛТК (Москва)</h3>
                 </div>
             </div>
@@ -72,6 +75,11 @@
     <!-- Hidden containers for PDF rendering -->
     <div id="document-container">
         <div id="baikal-container" class="render-container"><img id="baikal-background-image" class="background-image" src="" /></div>
+        
+        <!-- Новые контейнеры для Байкал СПБ -->
+        <div id="baikal-spb-doverenost-container" class="render-container"><img id="baikal-spb-doverenost-background-image" class="background-image" src="" /></div>
+        <div id="baikal-spb-zayavka-container" class="render-container"><img id="baikal-spb-zayavka-background-image" class="background-image" src="" /></div>
+        
         <div id="fortuna-container" class="render-container"><img id="fortuna-background-image" class="background-image" src="" /></div>
         <div id="atek-container" class="render-container"><img id="atek-background-image" class="background-image" src="" /></div>
         <div id="newline-container" class="render-container"><img id="newline-background-image" class="background-image" src="" /></div>
@@ -95,6 +103,25 @@ const baikalTemplateData = [
     {"id":"b_issue_day", "top":"12.39%","left":"68.83%","width":"4.00%", "fontSize":"12pt"},
     {"id":"b_issue_month","top":"12.30%","left":"74.33%","width":"13.00%","fontSize":"12pt"},
     {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
+];
+
+// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
+const baikalSpbDoverenostData = [
+    { "id": "b_spb_d_doc_num", "top": "33.80%", "left": "51.48%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
+    { "id": "b_spb_d_date", "top": "37.08%", "left": "21.41%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_fio_dob", "top": "50.05%", "left": "26.16%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_id_num", "top": "51.38%", "left": "11.85%", "width": "40.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_issued_by", "top": "52.36%", "left": "19.02%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_issue_date", "top": "53.45%", "left": "20.31%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_d_engine", "top": "63.59%", "left": "17.18%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
+];
+
+const baikalSpbZayavkaData = [
+    { "id": "b_spb_z_doc_num", "top": "10.82%", "left": "19.48%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_date", "top": "12.61%", "left": "18.75%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_engine", "top": "21.66%", "left": "10.45%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "b_spb_z_price", "top": "21.63%", "left": "69.55%", "width": "7.13%", "fontSize": "7.5pt", "align": "center", "fontWeight": "normal" },
+    { "id": "b_spb_z_sum", "top": "21.64%", "left": "76.72%", "width": "9.38%", "fontSize": "7pt", "align": "center", "fontWeight": "normal" }
 ];
 
 const fortunaTemplateData = [
@@ -134,6 +161,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Инициализация контейнеров
     const containers = [
         { id: 'baikal-container', data: baikalTemplateData },
+        { id: 'baikal-spb-doverenost-container', data: baikalSpbDoverenostData },
+        { id: 'baikal-spb-zayavka-container', data: baikalSpbZayavkaData },
         { id: 'fortuna-container', data: fortunaTemplateData },
         { id: 'atek-container', data: atekTemplateData },
         { id: 'newline-container', data: newlineTemplateData },
@@ -166,6 +195,7 @@ function setupNavigation() {
     };
 
     bindNav('select-baikal', 'baikal');
+    bindNav('select-baikal-spb', 'baikal-spb');
     bindNav('select-fortuna', 'fortuna');
     bindNav('select-atek', 'atek');
     bindNav('select-newline', 'newline');
@@ -195,7 +225,7 @@ function showFormScreen(type) {
     let buttonsHTML = '';
     let formTitle = '';
 
-    // Общие поля для большинства, но СЛТК имеет свои особенности
+    // Общие поля
     if (type === 'baikal') {
         formTitle = 'Данные для "Байкал Сервис"';
         formHTML = `
@@ -208,7 +238,34 @@ function showFormScreen(type) {
             <div><label for="input_recipient_id" class="block text-sm font-medium">Данные получателя (паспорт/ВУ)</label><textarea id="input_recipient_id" rows="3" class="mt-1 block w-full p-2 border rounded-md" placeholder="паспорт 00 00 123456..."></textarea></div>
         `;
         buttonsHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button id="generate-baikal-pdf" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700">Скачать Доверенность (PDF)</button><button id="generate-excel" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700">Скачать Расход (Excel)</button></div>`;
-    } else if (type === 'fortuna') {
+    } 
+    else if (type === 'baikal-spb') {
+        formTitle = 'Данные для "Байкал Сервис (СПБ)"';
+        formHTML = `
+            <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
+            <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
+             <div><label for="input_city" class="block text-sm font-medium">Город (для имени файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="СПБ"></div>
+            <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО получателя</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович"></div>
+            <div><label for="input_dob" class="block text-sm font-medium">Дата рождения</label><input type="date" id="input_dob" class="mt-1 block w-full p-2 border rounded-md"></div>
+            
+            <div class="mt-2 mb-2">
+                <label class="block text-sm font-medium">Тип документа</label>
+                <div class="flex gap-4 mt-1">
+                    <label class="inline-flex items-center"><input type="radio" name="id_type" value="passport" checked class="form-radio text-blue-600"> <span class="ml-2">Паспорт</span></label>
+                    <label class="inline-flex items-center"><input type="radio" name="id_type" value="dl" class="form-radio text-blue-600"> <span class="ml-2">Водительское уд.</span></label>
+                </div>
+            </div>
+
+            <div><label for="input_id_number" class="block text-sm font-medium">Номер документа (Серия и Номер)</label><input type="text" id="input_id_number" class="mt-1 block w-full p-2 border rounded-md" placeholder="0000 123456"></div>
+            <div><label for="input_issued_by" class="block text-sm font-medium">Кем выдан</label><input type="text" id="input_issued_by" class="mt-1 block w-full p-2 border rounded-md"></div>
+            <div><label for="input_id_date" class="block text-sm font-medium">Дата выдачи документа</label><input type="date" id="input_id_date" class="mt-1 block w-full p-2 border rounded-md"></div>
+
+            <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
+            <div><label for="input_amount" class="block text-sm font-medium">Цена</label><input type="number" id="input_amount" class="mt-1 block w-full p-2 border rounded-md" placeholder="185000"></div>
+        `;
+        buttonsHTML = `<button id="generate-baikal-spb-pdf" class="w-full bg-blue-800 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-900">Скачать Комплект (2 файла)</button>`;
+    }
+    else if (type === 'fortuna') {
         formTitle = 'Данные для "Фортуна"';
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="12345"></div>
@@ -256,6 +313,9 @@ function showFormScreen(type) {
         document.getElementById('generate-baikal-pdf').addEventListener('click', generateBaikalPdf);
         document.getElementById('generate-excel').addEventListener('click', generateExcel);
     }
+    if (type === 'baikal-spb') {
+        document.getElementById('generate-baikal-spb-pdf').addEventListener('click', generateBaikalSpbPdf);
+    }
     if (type === 'fortuna') document.getElementById('generate-fortuna-pdf').addEventListener('click', generateFortunaPdf);
     if (type === 'atek') document.getElementById('generate-atek-pdf').addEventListener('click', generateAtekPdf);
     if (type === 'newline') document.getElementById('generate-newline-pdf').addEventListener('click', generateNewlinePdf);
@@ -284,21 +344,26 @@ async function loadAllTemplates() {
         loadFile('./fortuna.jpg', 'image', 'fortuna-background-image'),
         loadFile('./atek.jpg', 'image', 'atek-background-image'),
         loadFile('./newline.jpg', 'image', 'newline-background-image'),
-        loadFile('./sltk.jpg', 'image', 'sltk-background-image')
+        loadFile('./sltk.jpg', 'image', 'sltk-background-image'),
+        loadFile('./baikal-piter-doverenost.jpg', 'image', 'baikal-spb-doverenost-background-image'),
+        loadFile('./baikal-piter-zayavka.jpg', 'image', 'baikal-spb-zayavka-background-image')
     ]);
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
 }
 
 // --- DOCUMENT GENERATION ---
-function createFileName() {
+function createFileName(prefix) {
     const dateValue = document.getElementById('input_date').value;
     const datePart = dateValue ? dateValue.split('-').reverse().join('.') : '';
     const cityPart = document.getElementById('input_city')?.value || '';
     const enginePart = document.getElementById('input_engine_model')?.value || '';
-    // Для СЛТК используем input_recipient_data, для остальных input_recipient_name
+    // Для СЛТК и Байкал СПБ своя логика получения ФИО может быть нужна, но стандартная обычно работает
     const recipientVal = document.getElementById('input_recipient_name')?.value || document.getElementById('input_recipient_data')?.value || '';
     const lastNamePart = recipientVal ? recipientVal.split(' ')[0] : '';
-    return [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ') + '.pdf';
+    
+    const baseName = [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ');
+    // Если передан префикс (например, "Доверенность"), добавляем его в начало
+    return (prefix ? prefix + ' ' : '') + baseName + '.pdf';
 }
 
 async function generatePdfFor(containerId) {
@@ -333,6 +398,49 @@ const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-conta
 const generateNewlinePdf = () => { updateNewlineDocument(); generatePdfFor('newline-container'); };
 const generateSltkPdf = () => { updateSltkDocument(); generatePdfFor('sltk-container'); };
 
+async function generateBaikalSpbPdf() {
+    const container1 = document.getElementById('baikal-spb-doverenost-container');
+    const container2 = document.getElementById('baikal-spb-zayavka-container');
+    
+    // Проверка загрузки шаблонов
+    const img1 = container1.querySelector('img');
+    const img2 = container2.querySelector('img');
+    if (!img1.src || img1.naturalWidth === 0 || !img2.src || img2.naturalWidth === 0) {
+        alert("Шаблоны для Байкал СПБ не загружены. Проверьте файлы.");
+        return;
+    }
+
+    showLoading('Генерация PDF файлов...');
+    updateBaikalSpbDocument();
+
+    try {
+        await new Promise(r => setTimeout(r, 100));
+        
+        // 1. Создание Доверенности
+        const canvas1 = await html2canvas(container1, { scale: 2, useCORS: true });
+        const imgData1 = canvas1.toDataURL('image/jpeg', 0.9);
+        const pdf1 = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
+        pdf1.addImage(imgData1, 'JPEG', 0, 0, pdf1.internal.pageSize.getWidth(), pdf1.internal.pageSize.getHeight());
+        // Сохраняем с префиксом
+        pdf1.save(createFileName('Доверенность'));
+
+        // 2. Создание Заявки
+        const canvas2 = await html2canvas(container2, { scale: 2, useCORS: true });
+        const imgData2 = canvas2.toDataURL('image/jpeg', 0.9);
+        const pdf2 = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
+        pdf2.addImage(imgData2, 'JPEG', 0, 0, pdf2.internal.pageSize.getWidth(), pdf2.internal.pageSize.getHeight());
+        // Сохраняем с префиксом
+        pdf2.save(createFileName('Заявка'));
+
+    } catch (error) {
+        console.error(error);
+        alert("Ошибка при создании PDF файлов");
+    } finally {
+        hideLoading();
+    }
+}
+
+
 // --- Document Update Functions ---
 function updateBaikalDocument() {
     const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
@@ -344,13 +452,11 @@ function updateBaikalDocument() {
     const passportEl = document.getElementById('b_passport');
     if (passportEl) {
         passportEl.innerText = passportVal;
-        // Если текст длинный (>58 символов), уменьшаем шрифт и поднимаем блок
         if (passportVal.length > 58) {
-             passportEl.style.fontSize = "11pt"; // Изменено на 11pt
-             passportEl.style.top = "43.2%"; // Поднимаем выше (было 43.89%)
+             passportEl.style.fontSize = "11pt";
+             passportEl.style.top = "43.2%";
              passportEl.style.lineHeight = "1.1";
         } else {
-             // Возвращаем стандартные значения
              passportEl.style.fontSize = "11.5pt";
              passportEl.style.top = "43.89%";
              passportEl.style.lineHeight = "normal";
@@ -368,6 +474,47 @@ function updateBaikalDocument() {
         ['b_issue_month', 'b_exp_month'].forEach(id => setText(id, month));
         ['b_issue_year', 'b_exp_year'].forEach(id => setText(id, year));
     }
+}
+
+function updateBaikalSpbDocument() {
+    const docNum = document.getElementById('input_doc_num').value;
+    const dateInput = document.getElementById('input_date').value;
+    const fio = document.getElementById('input_recipient_name').value;
+    const dob = document.getElementById('input_dob').value;
+    const idNumber = document.getElementById('input_id_number').value;
+    const issuedBy = document.getElementById('input_issued_by').value;
+    const idDateInput = document.getElementById('input_id_date').value;
+    const engine = document.getElementById('input_engine_model').value;
+    const price = document.getElementById('input_amount').value;
+    
+    const idType = document.querySelector('input[name="id_type"]:checked').value; // 'passport' or 'dl'
+
+    // Форматирование дат
+    const formatDate = (dStr) => {
+        if (!dStr) return '';
+        const d = new Date(dStr);
+        return d.toLocaleDateString('ru-RU');
+    };
+
+    // Заполнение Доверенности
+    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+    setText('b_spb_d_doc_num', docNum);
+    setText('b_spb_d_date', formatDate(dateInput));
+    setText('b_spb_d_fio_dob', `${fio}, ${formatDate(dob)}`);
+    
+    setText('b_spb_d_id_num', idNumber); 
+    
+    setText('b_spb_d_issued_by', issuedBy);
+    setText('b_spb_d_issue_date', formatDate(idDateInput));
+    setText('b_spb_d_engine', engine);
+
+    // Заполнение Заявки
+    setText('b_spb_z_doc_num', docNum);
+    setText('b_spb_z_date', formatDate(dateInput));
+    setText('b_spb_z_engine', engine);
+    setText('b_spb_z_price', price);
+    setText('b_spb_z_sum', price);
 }
 
 function updateFortunaDocument() {
