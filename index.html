@@ -55,8 +55,7 @@
                 <div id="select-newline" class="bg-sky-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-sky-600 transition-colors">
                     <h3 class="text-xl font-bold">Новая Линия (Махачкала)</h3>
                 </div>
-                <!-- Кнопка СЛТК теперь в общей сетке -->
-                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors">
+                <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors md:col-span-2">
                     <h3 class="text-xl font-bold">СЛТК (Москва)</h3>
                 </div>
             </div>
@@ -105,17 +104,19 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
-// Доверенность: сдвиг вправо на 1.5px (+0.19%)
+// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ (Доверенность: скорректировано) ---
 const baikalSpbDoverenostData = [
-    { "id": "b_spb_d_doc_num", "top": "33.36%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
+    // Номер документа выше на 2px (33.36% -> 33.18%)
+    { "id": "b_spb_d_doc_num", "top": "33.18%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
     { "id": "b_spb_d_date", "top": "36.64%", "left": "21.60%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.35%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    // Поле паспорта (id_num) будет заполняться HTML-ом для форматирования
+    // Поле паспорта (id_num)
     { "id": "b_spb_d_id_num", "top": "50.94%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
     { "id": "b_spb_d_issued_by", "top": "51.92%", "left": "19.21%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    // Дата выдачи: сдвиг вправо на 1.5px (базовый) + 5px (дополнительно) = +6.5px (~+0.81%) => 20.31 + 0.81 = 21.12
-    { "id": "b_spb_d_issue_date", "top": "53.01%", "left": "21.12%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    // Дата выдачи: ниже на 0.3px (~0.03%), левее на 1px (~0.13%)
+    // top: 53.01 + 0.03 = 53.04%
+    // left: 21.12 - 0.13 = 20.99%
+    { "id": "b_spb_d_issue_date", "top": "53.04%", "left": "20.99%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_d_engine", "top": "63.15%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
@@ -152,6 +153,7 @@ const newlineTemplateData = [
     { "id": "nl_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
 ];
 
+// --- ДАННЫЕ ДЛЯ СЛТК ---
 const sltkTemplateData = [
     { "id": "s_recipient", "top": "12.41%", "left": "18.81%", "width": "71.00%", "fontSize": "9pt", "align": "left", "fontWeight": "bold" },
     { "id": "s_engine", "top": "20.54%", "left": "12.73%", "width": "43.88%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
@@ -259,7 +261,7 @@ function showFormScreen(type) {
                 </div>
             </div>
 
-            <div><label for="input_id_number" class="block text-sm font-medium">Номер документа (Серия и Номер)</label><input type="text" id="input_id_number" class="mt-1 block w-full p-2 border rounded-md" placeholder="0000 123456"></div>
+            <div><label for="input_id_number" class="block text-sm font-medium">Номер документа (только цифры)</label><input type="text" id="input_id_number" class="mt-1 block w-full p-2 border rounded-md" placeholder="0000 123456"></div>
             <div><label for="input_issued_by" class="block text-sm font-medium">Кем выдан</label><input type="text" id="input_issued_by" class="mt-1 block w-full p-2 border rounded-md"></div>
             <div><label for="input_id_date" class="block text-sm font-medium">Дата выдачи документа</label><input type="date" id="input_id_date" class="mt-1 block w-full p-2 border rounded-md"></div>
 
@@ -479,7 +481,8 @@ function updateBaikalSpbDocument() {
     const dateInput = document.getElementById('input_date').value;
     const fio = document.getElementById('input_recipient_name').value;
     const dob = document.getElementById('input_dob').value;
-    const idNumber = document.getElementById('input_id_number').value;
+    // Оставляем только цифры
+    const idNumber = document.getElementById('input_id_number').value.replace(/\D/g, '');
     const issuedBy = document.getElementById('input_issued_by').value;
     const idDateInput = document.getElementById('input_id_date').value;
     const engine = document.getElementById('input_engine_model').value;
@@ -495,17 +498,16 @@ function updateBaikalSpbDocument() {
     };
 
     // Заполнение Доверенности
-    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
     const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
 
     setText('b_spb_d_doc_num', docNum);
     setText('b_spb_d_date', formatDate(dateInput));
     setText('b_spb_d_fio_dob', `${fio}, ${formatDate(dob)}`);
     
-    // Номер паспорта/ВУ с префиксом
+    // Номер паспорта/ВУ с префиксом. Префикс 8.5pt, номер 8pt.
     const docPrefix = idType === 'passport' ? 'Паспорт' : 'Водительское удостоверение';
-    // Используем увеличенный шрифт для префикса (например 10pt)
-    setHtml('b_spb_d_id_num', `<span style="font-size: 10pt;">${docPrefix}</span>: ${idNumber}`); 
+    setHtml('b_spb_d_id_num', `<span style="font-size: 8.5pt;">${docPrefix}</span>: ${idNumber}`); 
     
     setText('b_spb_d_issued_by', issuedBy);
     setText('b_spb_d_issue_date', formatDate(idDateInput));
