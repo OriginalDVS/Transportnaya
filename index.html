@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         document.getElementById('loading-text').textContent = 'Ошибка загрузки шаблонов!';
         console.error("Error during loadAllTemplates:", error);
-        alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12).');
+        alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12) и наличие файлов в репозитории.');
     } finally {
         hideLoading(); 
     }
