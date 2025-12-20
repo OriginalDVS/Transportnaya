@@ -43,8 +43,9 @@
                 <div id="select-baikal" class="bg-blue-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-600 transition-colors">
                     <h3 class="text-xl font-bold">Байкал Сервис</h3>
                 </div>
-                <div id="select-baikal-spb" class="bg-blue-700 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-800 transition-colors">
-                    <h3 class="text-xl font-bold">Байкал Сервис (Санкт-Петербург)</h3>
+                <div id="select-baikal-spb" class="bg-blue-700 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-blue-800 transition-colors flex flex-col items-center justify-center">
+                    <h3 class="text-xl font-bold">Байкал Сервис</h3>
+                    <span class="text-base font-normal mt-1">(Санкт-Петербург)</span>
                 </div>
                 <div id="select-fortuna" class="bg-purple-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-purple-600 transition-colors">
                     <h3 class="text-xl font-bold">Фортуна</h3>
@@ -106,31 +107,27 @@ const baikalTemplateData = [
 
 // --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
 // Расчеты в пикселях (примерно): 1% высоты ~11.3px, 1% ширины ~8px
-// 5px вверх = -0.44% top
-// 2px вправо = +0.25% left
-// 1.5px вверх = -0.13% top
-// 0.2px вправо = +0.025% left
-// 2px вниз = +0.18% top
-// 1px вниз = +0.09% top
+// 0.5px вниз = +0.04% top
 const baikalSpbDoverenostData = [
-    { "id": "b_spb_d_doc_num", "top": "33.18%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
+    // Doc Num: 33.18% + 0.04% = 33.22%
+    { "id": "b_spb_d_doc_num", "top": "33.22%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
     
-    // Общая дата выдачи: Вернул координаты (37.08%, 21.41%) -> Up 5px (-0.44%), Right 2px (+0.25%) -> 36.64%, 21.66%
-    { "id": "b_spb_d_date", "top": "36.64%", "left": "21.66%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    // Общая дата выдачи: 36.64% + 0.04% = 36.68%
+    { "id": "b_spb_d_date", "top": "36.68%", "left": "21.66%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     
     { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.35%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     
     // Номер паспорта/ВУ
     { "id": "b_spb_d_id_num", "top": "50.90%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
     
-    // Кем выдан: 52.10%, 19.21% -> Up 1.5px (-0.13%), Right 0.2px (+0.025%) -> 51.97%, 19.235%
+    // Кем выдан
     { "id": "b_spb_d_issued_by", "top": "51.97%", "left": "19.235%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     
-    // Дата выдачи документа: 53.04% -> Down 2px (+0.18%) -> 53.22%
+    // Дата выдачи документа
     { "id": "b_spb_d_issue_date", "top": "53.22%", "left": "20.73%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     
-    // Модель двигателя: 63.15% -> Down 1px (+0.09%) -> 63.24%
-    { "id": "b_spb_d_engine", "top": "63.24%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
+    // Модель двигателя: 63.24% + 0.04% = 63.28%
+    { "id": "b_spb_d_engine", "top": "63.28%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
 // Все в заявке ниже на 1.5px (+0.13%)
@@ -520,7 +517,7 @@ function updateBaikalSpbDocument() {
     
     // Номер паспорта/ВУ с префиксом. Убрали жирность (было font-weight: 700)
     const docPrefix = idType === 'passport' ? 'Паспорт' : 'Водительское удостоверение';
-    setHtml('b_spb_d_id_num', `<span style="font-weight: normal; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
+    setHtml('b_spb_d_id_num', `<span style="font-weight: 500; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
     
     setText('b_spb_d_issued_by', issuedBy);
     setText('b_spb_d_issue_date', idDateInput); // Используем введенное значение напрямую
