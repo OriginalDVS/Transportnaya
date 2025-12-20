@@ -104,20 +104,24 @@ const baikalTemplateData = [
     {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ (Доверенность: скорректировано) ---
+// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
 const baikalSpbDoverenostData = [
     { "id": "b_spb_d_doc_num", "top": "33.18%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
-    { "id": "b_spb_d_date", "top": "36.64%", "left": "21.60%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    // Общая дата выдачи: Вернул координаты (37.08%, 21.41%)
+    { "id": "b_spb_d_date", "top": "37.08%", "left": "21.41%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.35%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    // Поле паспорта: top 50.94% -> 50.90% (выше на 0.5px)
+    
+    // Номер паспорта/ВУ (поднят выше)
     { "id": "b_spb_d_id_num", "top": "50.90%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
-    { "id": "b_spb_d_issued_by", "top": "51.92%", "left": "19.21%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    // Дата выдачи: левее на 1px (20.99% -> 20.86%)
-    { "id": "b_spb_d_issue_date", "top": "53.04%", "left": "20.86%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    
+    // Кем выдан (чуть увеличен отступ сверху, чтобы не накладывался)
+    { "id": "b_spb_d_issued_by", "top": "52.10%", "left": "19.21%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    
+    // Дата выдачи документа: левее на 1px (20.86% -> 20.73%)
+    { "id": "b_spb_d_issue_date", "top": "53.04%", "left": "20.73%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_d_engine", "top": "63.15%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
-// Заявка: сдвиг вверх на 5px (-0.44%), вправо на 2px (+0.25%)
 const baikalSpbZayavkaData = [
     { "id": "b_spb_z_doc_num", "top": "10.38%", "left": "19.73%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_z_date", "top": "12.17%", "left": "19.00%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
@@ -153,13 +157,12 @@ const newlineTemplateData = [
 const sltkTemplateData = [
     { "id": "s_recipient", "top": "12.41%", "left": "18.81%", "width": "71.00%", "fontSize": "9pt", "align": "left", "fontWeight": "bold" },
     { "id": "s_engine", "top": "20.54%", "left": "12.73%", "width": "43.88%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "s_order", "top": "20.64%", "left": "77.92%", "width": "16.38%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "s_order", "top": "20.64%", "left": "78.42%", "width": "16.38%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
     { "id": "s_act", "top": "4.08%", "left": "7.75%", "width": "87.13%", "fontSize": "13.5pt", "align": "left", "fontWeight": "bold" }
 ];
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // Инициализация контейнеров
     const containers = [
         { id: 'baikal-container', data: baikalTemplateData },
         { id: 'baikal-spb-doverenost-container', data: baikalSpbDoverenostData },
@@ -246,6 +249,7 @@ function showFormScreen(type) {
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
              <div><label for="input_city" class="block text-sm font-medium">Город (для имени файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="СПБ"></div>
+            <!-- Объединенное поле ФИО и Дата рождения -->
             <div><label for="input_recipient_fio_dob" class="block text-sm font-medium">ФИО и дата рождения</label><input type="text" id="input_recipient_fio_dob" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, 01.01.1990"></div>
             
             <div class="mt-2 mb-2">
@@ -256,10 +260,8 @@ function showFormScreen(type) {
                 </div>
             </div>
 
-            <!-- ИЗМЕНЕНИЕ: oninput для запрета букв -->
             <div><label for="input_id_number" class="block text-sm font-medium">Номер документа (только цифры)</label><input type="text" id="input_id_number" oninput="this.value = this.value.replace(/\\D/g, '')" class="mt-1 block w-full p-2 border rounded-md" placeholder="0000123456"></div>
             <div><label for="input_issued_by" class="block text-sm font-medium">Кем выдан</label><input type="text" id="input_issued_by" class="mt-1 block w-full p-2 border rounded-md"></div>
-            <!-- ИЗМЕНЕНИЕ: Текстовое поле для даты выдачи -->
             <div><label for="input_id_date" class="block text-sm font-medium">Дата выдачи документа</label><input type="text" id="input_id_date" class="mt-1 block w-full p-2 border rounded-md" placeholder="12.05.2022"></div>
 
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
@@ -502,9 +504,9 @@ function updateBaikalSpbDocument() {
     setText('b_spb_d_date', formatDate(dateInput));
     setText('b_spb_d_fio_dob', fioDob); // Прямая вставка без форматирования
     
-    // Номер паспорта/ВУ с префиксом. Префикс 8.5pt, жирнее.
+    // Номер паспорта/ВУ с префиксом. Жирный (bold) или 700.
     const docPrefix = idType === 'passport' ? 'Паспорт' : 'Водительское удостоверение';
-    setHtml('b_spb_d_id_num', `<span style="font-weight: 500; font-size: 8.5pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
+    setHtml('b_spb_d_id_num', `<span style="font-weight: 700; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
     
     setText('b_spb_d_issued_by', issuedBy);
     setText('b_spb_d_issue_date', idDateInput); // Используем введенное значение напрямую
