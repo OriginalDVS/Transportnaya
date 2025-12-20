@@ -55,7 +55,6 @@
                 <div id="select-newline" class="bg-sky-500 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-sky-600 transition-colors">
                     <h3 class="text-xl font-bold">Новая Линия (Махачкала)</h3>
                 </div>
-                <!-- Кнопка СЛТК в общей сетке -->
                 <div id="select-sltk" class="bg-red-600 text-white p-6 rounded-lg shadow-lg text-center cursor-pointer hover:bg-red-700 transition-colors">
                     <h3 class="text-xl font-bold">СЛТК (Москва)</h3>
                 </div>
@@ -110,10 +109,11 @@ const baikalSpbDoverenostData = [
     { "id": "b_spb_d_doc_num", "top": "33.18%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
     { "id": "b_spb_d_date", "top": "36.64%", "left": "21.60%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.35%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    // Поле паспорта
-    { "id": "b_spb_d_id_num", "top": "50.94%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
+    // Поле паспорта: top 50.94% -> 50.90% (выше на 0.5px)
+    { "id": "b_spb_d_id_num", "top": "50.90%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
     { "id": "b_spb_d_issued_by", "top": "51.92%", "left": "19.21%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "b_spb_d_issue_date", "top": "53.04%", "left": "20.99%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
+    // Дата выдачи: левее на 1px (20.99% -> 20.86%)
+    { "id": "b_spb_d_issue_date", "top": "53.04%", "left": "20.86%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_d_engine", "top": "63.15%", "left": "17.37%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
@@ -153,7 +153,7 @@ const newlineTemplateData = [
 const sltkTemplateData = [
     { "id": "s_recipient", "top": "12.41%", "left": "18.81%", "width": "71.00%", "fontSize": "9pt", "align": "left", "fontWeight": "bold" },
     { "id": "s_engine", "top": "20.54%", "left": "12.73%", "width": "43.88%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    { "id": "s_order", "top": "20.64%", "left": "78.42%", "width": "16.38%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
+    { "id": "s_order", "top": "20.64%", "left": "77.92%", "width": "16.38%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
     { "id": "s_act", "top": "4.08%", "left": "7.75%", "width": "87.13%", "fontSize": "13.5pt", "align": "left", "fontWeight": "bold" }
 ];
 
@@ -246,8 +246,7 @@ function showFormScreen(type) {
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
              <div><label for="input_city" class="block text-sm font-medium">Город (для имени файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="СПБ"></div>
-            <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО получателя</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович"></div>
-            <div><label for="input_dob" class="block text-sm font-medium">Дата рождения</label><input type="date" id="input_dob" class="mt-1 block w-full p-2 border rounded-md"></div>
+            <div><label for="input_recipient_fio_dob" class="block text-sm font-medium">ФИО и дата рождения</label><input type="text" id="input_recipient_fio_dob" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, 01.01.1990"></div>
             
             <div class="mt-2 mb-2">
                 <label class="block text-sm font-medium">Тип документа</label>
@@ -367,7 +366,8 @@ function createFileName(prefix) {
     const cityPart = document.getElementById('input_city')?.value || '';
     const enginePart = document.getElementById('input_engine_model')?.value || '';
     // Для СЛТК и Байкал СПБ своя логика получения ФИО может быть нужна, но стандартная обычно работает
-    const recipientVal = document.getElementById('input_recipient_name')?.value || document.getElementById('input_recipient_data')?.value || '';
+    // Если есть input_recipient_fio_dob (для Байкал СПБ), берем его, иначе standard
+    const recipientVal = document.getElementById('input_recipient_fio_dob')?.value || document.getElementById('input_recipient_name')?.value || document.getElementById('input_recipient_data')?.value || '';
     const lastNamePart = recipientVal ? recipientVal.split(' ')[0] : '';
     
     const baseName = [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ');
@@ -477,9 +477,9 @@ function updateBaikalDocument() {
 function updateBaikalSpbDocument() {
     const docNum = document.getElementById('input_doc_num').value;
     const dateInput = document.getElementById('input_date').value;
-    const fio = document.getElementById('input_recipient_name').value;
-    const dob = document.getElementById('input_dob').value;
-    const idNumber = document.getElementById('input_id_number').value;
+    // Используем новое объединенное поле
+    const fioDob = document.getElementById('input_recipient_fio_dob').value;
+    const idNumber = document.getElementById('input_id_number').value.replace(/\D/g, '');
     const issuedBy = document.getElementById('input_issued_by').value;
     const idDateInput = document.getElementById('input_id_date').value;
     const engine = document.getElementById('input_engine_model').value;
@@ -500,11 +500,11 @@ function updateBaikalSpbDocument() {
 
     setText('b_spb_d_doc_num', docNum);
     setText('b_spb_d_date', formatDate(dateInput));
-    setText('b_spb_d_fio_dob', `${fio}, ${formatDate(dob)}`);
+    setText('b_spb_d_fio_dob', fioDob); // Прямая вставка без форматирования
     
-    // Номер паспорта/ВУ с префиксом.
+    // Номер паспорта/ВУ с префиксом. Префикс 8.5pt, жирнее.
     const docPrefix = idType === 'passport' ? 'Паспорт' : 'Водительское удостоверение';
-    setHtml('b_spb_d_id_num', `<span style="font-weight: 600; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
+    setHtml('b_spb_d_id_num', `<span style="font-weight: 500; font-size: 8.5pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
     
     setText('b_spb_d_issued_by', issuedBy);
     setText('b_spb_d_issue_date', idDateInput); // Используем введенное значение напрямую
