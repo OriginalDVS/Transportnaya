@@ -317,7 +317,8 @@ function showFormScreen(type) {
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
             <div><label for="input_recipient_data" class="block text-sm font-medium">Данные получателя (ФИО + Паспорт/ВУ)</label><textarea id="input_recipient_data" rows="4" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, паспорт 00 00 123456..."></textarea></div>
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
-            <div><label for="input_city" class="block text-sm font-medium">Город (для имени файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Москва"></div>
+            <!-- City automatically set to Moscow -->
+            <input type="hidden" id="input_city" value="Москва">
         `;
         buttonsHTML = `<button id="generate-sltk-pdf" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700">Скачать Заявку (PDF)</button>`;
     }
