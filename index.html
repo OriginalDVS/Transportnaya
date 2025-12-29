@@ -300,10 +300,15 @@ function showFormScreen(type) {
         buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Создать акт выдачи</button>`;
     } else if (type === 'atek' || type === 'newline') {
         formTitle = type === 'atek' ? 'Данные для "АТЭК (Краснодар)"' : 'Данные для "Новая Линия (Махачкала)"';
+        
+        // Автоматическая установка города для обоих вариантов
+        const autoCity = type === 'atek' ? 'Краснодар' : 'Махачкала';
+        const cityField = `<input type="hidden" id="input_city" value="${autoCity}">`;
+
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю030"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
-             <div><label for="input_city" class="block text-sm font-medium">Город (для названия файла)</label><input type="text" id="input_city" class="mt-1 block w-full p-2 border rounded-md" placeholder="Сургут"></div>
+            ${cityField}
             <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО и паспортные данные</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, паспорт..."></div>
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
         `;
