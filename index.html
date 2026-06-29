@@ -9,21 +9,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- PizZip + docxtemplater для заполнения docx, docx-preview для рендера -->
+    <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.44.0/build/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx-preview/0.3.3/docx-preview.min.js"></script>
     <style>
         body { -webkit-tap-highlight-color: transparent; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
+
         #document-container { position: absolute; left: -9999px; top: 0; width: 800px; }
         .render-container { position: relative; width: 100%; background-color: white; }
         .background-image { display: block; width: 100%; height: auto; }
         .data-field { position: absolute; font-family: Arial, sans-serif; color: black; }
 
         /* Specific styles */
-        #a_fio, #nl_fio, #s_recipient, #s_order { white-space: normal; word-wrap: break-word; line-height: 1.2; }
-        #a_shapka, #a_dvs, #nl_shapka, #nl_dvs, #s_act, #s_engine { white-space: nowrap; }
+        #nl_fio, #s_recipient, #s_order { white-space: normal; word-wrap: break-word; line-height: 1.2; }
+        #nl_shapka, #nl_dvs, #s_act, #s_engine { white-space: nowrap; }
         .custom-underline { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 7px; }
 
+        /* Контейнер для рендера docx (АТЭК) */
+        #atek-docx-render { position: absolute; left: -9999px; top: 0; width: 794px; background:#fff; }
+        #atek-docx-render .docx-wrapper { background:#fff; padding:0; }
+        #atek-docx-render .docx-wrapper>section.docx { box-shadow:none; margin:0; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -75,21 +83,24 @@
     <!-- Hidden containers for PDF rendering -->
     <div id="document-container">
         <div id="baikal-container" class="render-container"><img id="baikal-background-image" class="background-image" src="" /></div>
-        
-        <!-- Новые контейнеры для Байкал СПБ -->
+
+        <!-- Контейнеры для Байкал СПБ -->
         <div id="baikal-spb-doverenost-container" class="render-container"><img id="baikal-spb-doverenost-background-image" class="background-image" src="" /></div>
         <div id="baikal-spb-zayavka-container" class="render-container"><img id="baikal-spb-zayavka-background-image" class="background-image" src="" /></div>
-        
+
         <div id="fortuna-container" class="render-container"><img id="fortuna-background-image" class="background-image" src="" /></div>
-        <div id="atek-container" class="render-container"><img id="atek-background-image" class="background-image" src="" /></div>
         <div id="newline-container" class="render-container"><img id="newline-background-image" class="background-image" src="" /></div>
         <div id="sltk-container" class="render-container"><img id="sltk-background-image" class="background-image" src="" /></div>
     </div>
+
+    <!-- Скрытый контейнер для рендера docx АТЭК -->
+    <div id="atek-docx-render"></div>
 
 <script>
 // --- GLOBAL VARIABLES ---
 const { jsPDF } = window.jspdf;
 let excelTemplateFile = null;
+let atekDocxTemplate = null; // ArrayBuffer шаблона atek.docx
 
 // --- TEMPLATE DATA ---
 
@@ -97,42 +108,24 @@ const baikalTemplateData = [
     {"id":"b_doc_num", "top":"6.36%", "left":"68.00%","width":"11.00%","fontSize":"11.5pt","fontWeight":"bold"},
     {"id":"b_fio", "top":"38.42%","left":"10.25%","width":"82.50%","fontSize":"11.5pt","fontWeight":"bold"},
     {"id":"b_passport", "top":"43.89%","left":"10.25%","width":"82.50%","fontSize":"11.5pt","fontWeight":"bold"},
-    // b_exp_day (Вторая дата): Сдвиг вправо на 1.2px (+0.15%), Вниз на 0.5px (+0.04%)
     {"id":"b_exp_day", "top":"65.22%","left":"53.40%","width":"4.00%", "fontSize":"12pt"},
     {"id":"b_exp_month", "top":"65.09%","left":"58.88%","width":"19.00%","fontSize":"12pt"},
     {"id":"b_exp_year", "top":"65.20%","left":"79.13%","width":"4.50%", "fontSize":"12.5pt"},
-    // b_issue_day (Первая дата): Сдвиг вправо на 1.2px (+0.15%)
     {"id":"b_issue_day", "top":"12.39%","left":"68.98%","width":"4.00%", "fontSize":"12pt"},
     {"id":"b_issue_month","top":"12.30%","left":"74.33%","width":"13.00%","fontSize":"12pt"},
     {"id":"b_issue_year", "top":"12.40%","left":"87.83%","width":"3.50%", "fontSize":"12.6pt"}
 ];
 
-// --- ДАННЫЕ ДЛЯ БАЙКАЛ СПБ ---
-// Расчеты в пикселях (примерно): 1% высоты ~11.3px, 1% ширины ~8px
-// 0.5px вниз = +0.04% top
 const baikalSpbDoverenostData = [
-    // Doc Num: 33.18% + 0.04% = 33.22%
     { "id": "b_spb_d_doc_num", "top": "33.22%", "left": "51.67%", "width": "20.00%", "fontSize": "13pt", "align": "left", "fontWeight": "bold" },
-    
-    // Общая дата выдачи: 36.64% + 0.04% = 36.68%
     { "id": "b_spb_d_date", "top": "36.70%", "left": "21.00%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    
     { "id": "b_spb_d_fio_dob", "top": "49.61%", "left": "26.35%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    
-    // Номер паспорта/ВУ
-    { "id": "b_spb_d_id_num", "top": "50.90%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }, 
-    
-    // Кем выдан
+    { "id": "b_spb_d_id_num", "top": "50.90%", "left": "12.04%", "width": "80.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_d_issued_by", "top": "51.97%", "left": "19.235%", "width": "60.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    
-    // Дата выдачи документа
     { "id": "b_spb_d_issue_date", "top": "53.22%", "left": "20.73%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" },
-    
-    // Модель двигателя: 63.24% + 0.04% = 63.28%
     { "id": "b_spb_d_engine", "top": "63.50%", "left": "17.80%", "width": "20.00%", "fontSize": "8pt", "align": "left", "fontWeight": "normal" }
 ];
 
-// Все в заявке ниже на 1.5px (+0.13%)
 const baikalSpbZayavkaData = [
     { "id": "b_spb_z_doc_num", "top": "10.51%", "left": "19.73%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
     { "id": "b_spb_z_date", "top": "12.30%", "left": "19.00%", "width": "20.00%", "fontSize": "7pt", "align": "left", "fontWeight": "normal" },
@@ -151,12 +144,6 @@ const fortunaTemplateData = [
     { "id": "f_total1", "top": "42.90%", "left": "60.25%", "width": "7.12%", "fontSize": "6pt", "fontWeight": "normal", "align": "right" },
     { "id": "f_total2", "top": "43.95%", "left": "60.25%", "width": "7.12%", "fontSize": "6pt", "fontWeight": "normal", "align": "right" },
     { "id": "f_city", "top": "10.95%", "left": "7.00%", "width": "14.00%", "fontSize": "8pt", "fontWeight": "normal", "align": "left" }
-];
-
-const atekTemplateData = [
-    { "id": "a_fio", "top": "21.55%", "left": "26.10%", "width": "51.00%", "fontSize": "12pt", "align": "left", "fontWeight": "normal" },
-    { "id": "a_shapka", "top": "9.75%", "left": "13.3%", "width": "68.38%", "fontSize": "12pt", "align": "left", "fontWeight": "bold" },
-    { "id": "a_dvs", "top": "34.18%", "left": "18.80%", "width": "16.75%", "fontSize": "10pt", "align": "left", "fontWeight": "normal" },
 ];
 
 const newlineTemplateData = [
@@ -179,7 +166,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 'baikal-spb-doverenost-container', data: baikalSpbDoverenostData },
         { id: 'baikal-spb-zayavka-container', data: baikalSpbZayavkaData },
         { id: 'fortuna-container', data: fortunaTemplateData },
-        { id: 'atek-container', data: atekTemplateData },
         { id: 'newline-container', data: newlineTemplateData },
         { id: 'sltk-container', data: sltkTemplateData }
     ];
@@ -199,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Error during loadAllTemplates:", error);
         alert('Не удалось загрузить один или несколько шаблонов. Проверьте консоль (F12) и наличие файлов в репозитории.');
     } finally {
-        hideLoading(); 
+        hideLoading();
     }
 });
 
@@ -233,14 +219,13 @@ function showFormScreen(type) {
     const form = document.getElementById('data-form');
     const buttons = document.getElementById('generator-buttons');
     const formTitleEl = document.getElementById('form-title');
-    
+
     if (!form || !buttons || !formTitleEl) return;
 
     let formHTML = '';
     let buttonsHTML = '';
     let formTitle = '';
 
-    // Общие поля
     if (type === 'baikal') {
         formTitle = 'Данные для "Байкал Сервис"';
         formHTML = `
@@ -253,18 +238,14 @@ function showFormScreen(type) {
             <div><label for="input_recipient_id" class="block text-sm font-medium">Данные получателя (паспорт/ВУ)</label><textarea id="input_recipient_id" rows="3" class="mt-1 block w-full p-2 border rounded-md" placeholder="паспорт 00 00 123456..."></textarea></div>
         `;
         buttonsHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button id="generate-baikal-pdf" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700">Скачать Доверенность (PDF)</button><button id="generate-excel" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700">Скачать Расход (Excel)</button></div>`;
-    } 
+    }
     else if (type === 'baikal-spb') {
         formTitle = 'Данные для "Байкал Сервис (Санкт-Петербург)"';
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер документа</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю-123"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
-             <!-- City removed, automatically set to Saint Petersburg -->
              <input type="hidden" id="input_city" value="Санкт-Петербург">
-             
-            <!-- Объединенное поле ФИО и Дата рождения -->
             <div><label for="input_recipient_fio_dob" class="block text-sm font-medium">ФИО и дата рождения</label><input type="text" id="input_recipient_fio_dob" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, 01.01.1990"></div>
-            
             <div class="mt-2 mb-2">
                 <label class="block text-sm font-medium">Тип документа</label>
                 <div class="flex gap-4 mt-1">
@@ -272,11 +253,9 @@ function showFormScreen(type) {
                     <label class="inline-flex items-center"><input type="radio" name="id_type" value="dl" class="form-radio text-blue-600"> <span class="ml-2">Водительское уд.</span></label>
                 </div>
             </div>
-
             <div><label for="input_id_number" class="block text-sm font-medium">Номер документа (только цифры)</label><input type="text" id="input_id_number" oninput="this.value = this.value.replace(/\\D/g, '')" class="mt-1 block w-full p-2 border rounded-md" placeholder="0000123456"></div>
             <div><label for="input_issued_by" class="block text-sm font-medium">Кем выдан</label><input type="text" id="input_issued_by" class="mt-1 block w-full p-2 border rounded-md"></div>
             <div><label for="input_id_date" class="block text-sm font-medium">Дата выдачи документа</label><input type="text" id="input_id_date" class="mt-1 block w-full p-2 border rounded-md" placeholder="12.05.2022"></div>
-
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
             <div><label for="input_amount" class="block text-sm font-medium">Цена</label><input type="number" id="input_amount" class="mt-1 block w-full p-2 border rounded-md" placeholder="185000"></div>
         `;
@@ -298,23 +277,31 @@ function showFormScreen(type) {
             <div><label for="input_amount" class="block text-sm font-medium">Цена</label><input type="number" id="input_amount" class="mt-1 block w-full p-2 border rounded-md" placeholder="185000"></div>
         `;
         buttonsHTML = `<button id="generate-fortuna-pdf" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700">Создать акт выдачи</button>`;
-    } else if (type === 'atek' || type === 'newline') {
-        formTitle = type === 'atek' ? 'Данные для "АТЭК (Краснодар)"' : 'Данные для "Новая Линия (Махачкала)"';
-        
-        // Автоматическая установка города для обоих вариантов
-        const autoCity = type === 'atek' ? 'Краснодар' : 'Махачкала';
-        const cityField = `<input type="hidden" id="input_city" value="${autoCity}">`;
+    } else if (type === 'atek') {
+        formTitle = 'Данные для "АТЭК (Краснодар)"';
+        formHTML = `
+            <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="29"></div>
+            <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
+            <input type="hidden" id="input_city" value="Краснодар">
+            <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО и паспортные данные (Примечание)</label><textarea id="input_recipient_name" rows="2" class="mt-1 block w-full p-2 border rounded-md" placeholder="Зотолокин Александр Сергеевич в/у 9925 258606 ГИБДД 2309 Краснодарский Край 20.09.2022"></textarea></div>
 
+            <div id="atek-engines-block" class="border-t pt-3">
+                <label class="block text-sm font-medium mb-2">Модели двигателей (до 3)</label>
+                <div id="atek-engines-list" class="space-y-3"></div>
+                <button type="button" id="atek-add-engine" class="mt-3 inline-flex items-center gap-1 bg-teal-100 text-teal-800 font-semibold py-2 px-3 rounded-md hover:bg-teal-200 transition-colors">＋ Добавить модель</button>
+            </div>
+        `;
+        buttonsHTML = `<button id="generate-atek-pdf" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">Скачать Заявку (PDF)</button>`;
+    } else if (type === 'newline') {
+        formTitle = 'Данные для "Новая Линия (Махачкала)"';
         formHTML = `
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю030"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
-            ${cityField}
+            <input type="hidden" id="input_city" value="Махачкала">
             <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО и паспортные данные</label><input type="text" id="input_recipient_name" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, паспорт..."></div>
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
         `;
-        const btnColor = type === 'atek' ? 'teal' : 'sky';
-        const funcId = type === 'atek' ? 'generate-atek-pdf' : 'generate-newline-pdf';
-        buttonsHTML = `<button id="${funcId}" class="w-full bg-${btnColor}-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-${btnColor}-700">Скачать Заявку (PDF)</button>`;
+        buttonsHTML = `<button id="generate-newline-pdf" class="w-full bg-sky-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-700">Скачать Заявку (PDF)</button>`;
     } else if (type === 'sltk') {
         formTitle = 'Данные для "СЛТК (Москва)"';
         formHTML = `
@@ -322,7 +309,6 @@ function showFormScreen(type) {
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
             <div><label for="input_recipient_data" class="block text-sm font-medium">Данные получателя (ФИО + Паспорт/ВУ)</label><textarea id="input_recipient_data" rows="4" class="mt-1 block w-full p-2 border rounded-md" placeholder="Иванов Иван Иванович, паспорт 00 00 123456..."></textarea></div>
             <div><label for="input_engine_model" class="block text-sm font-medium">Модель двигателя</label><input type="text" id="input_engine_model" class="mt-1 block w-full p-2 border rounded-md" placeholder="G4FC"></div>
-            <!-- City automatically set to Moscow -->
             <input type="hidden" id="input_city" value="Москва">
         `;
         buttonsHTML = `<button id="generate-sltk-pdf" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700">Скачать Заявку (PDF)</button>`;
@@ -330,10 +316,10 @@ function showFormScreen(type) {
 
     formTitleEl.innerText = formTitle;
     form.innerHTML = formHTML;
-    
+
     const dateInput = document.getElementById('input_date');
     if (dateInput) dateInput.valueAsDate = new Date();
-    
+
     buttons.innerHTML = buttonsHTML;
 
     // Event listeners
@@ -346,9 +332,83 @@ function showFormScreen(type) {
         document.getElementById('generate-baikal-spb-zayavka-pdf').addEventListener('click', () => generateBaikalSpbSinglePdf('zayavka'));
     }
     if (type === 'fortuna') document.getElementById('generate-fortuna-pdf').addEventListener('click', generateFortunaPdf);
-    if (type === 'atek') document.getElementById('generate-atek-pdf').addEventListener('click', generateAtekPdf);
+    if (type === 'atek') {
+        initAtekEngines();
+        document.getElementById('atek-add-engine').addEventListener('click', addAtekEngineRow);
+        document.getElementById('generate-atek-pdf').addEventListener('click', generateAtekPdf);
+    }
     if (type === 'newline') document.getElementById('generate-newline-pdf').addEventListener('click', generateNewlinePdf);
     if (type === 'sltk') document.getElementById('generate-sltk-pdf').addEventListener('click', generateSltkPdf);
+}
+
+// --- ATEK ENGINES DYNAMIC ROWS ---
+const ATEK_MAX_ENGINES = 3;
+
+function atekEngineRowTemplate(index) {
+    return `
+    <div class="atek-engine-row border rounded-md p-3 bg-gray-50" data-index="${index}">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-gray-700">Двигатель ${index + 1}</span>
+            <button type="button" class="atek-remove-engine text-red-500 text-sm hover:text-red-700 ${index === 0 ? 'hidden' : ''}">Удалить</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+                <label class="block text-xs text-gray-600">Модель двигателя</label>
+                <input type="text" class="atek-dvs mt-1 block w-full p-2 border rounded-md text-sm" placeholder="G4FC 1.6">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-600">Кол-во (шт.)</label>
+                <input type="number" min="1" value="1" class="atek-kol mt-1 block w-full p-2 border rounded-md text-sm">
+            </div>
+        </div>
+    </div>`;
+}
+
+function initAtekEngines() {
+    const list = document.getElementById('atek-engines-list');
+    if (!list) return;
+    list.innerHTML = atekEngineRowTemplate(0);
+    bindAtekRemoveButtons();
+    updateAtekAddButton();
+}
+
+function addAtekEngineRow() {
+    const list = document.getElementById('atek-engines-list');
+    if (!list) return;
+    const count = list.querySelectorAll('.atek-engine-row').length;
+    if (count >= ATEK_MAX_ENGINES) return;
+    list.insertAdjacentHTML('beforeend', atekEngineRowTemplate(count));
+    bindAtekRemoveButtons();
+    updateAtekAddButton();
+}
+
+function bindAtekRemoveButtons() {
+    document.querySelectorAll('.atek-remove-engine').forEach(btn => {
+        btn.onclick = function() {
+            this.closest('.atek-engine-row').remove();
+            renumberAtekRows();
+            updateAtekAddButton();
+        };
+    });
+}
+
+function renumberAtekRows() {
+    const rows = document.querySelectorAll('#atek-engines-list .atek-engine-row');
+    rows.forEach((row, i) => {
+        row.setAttribute('data-index', i);
+        const label = row.querySelector('span');
+        if (label) label.textContent = 'Двигатель ' + (i + 1);
+        const rm = row.querySelector('.atek-remove-engine');
+        if (rm) rm.classList.toggle('hidden', i === 0);
+    });
+}
+
+function updateAtekAddButton() {
+    const list = document.getElementById('atek-engines-list');
+    const addBtn = document.getElementById('atek-add-engine');
+    if (!list || !addBtn) return;
+    const count = list.querySelectorAll('.atek-engine-row').length;
+    addBtn.classList.toggle('hidden', count >= ATEK_MAX_ENGINES);
 }
 
 // --- FILE HANDLING ---
@@ -362,7 +422,7 @@ async function loadFile(url, type, elementId) {
         const blob = await response.blob();
         const el = document.getElementById(elementId);
         if (el) el.src = URL.createObjectURL(blob);
-    } else { // excel
+    } else { // excel / docx (arraybuffer)
         return await response.arrayBuffer();
     }
 }
@@ -371,13 +431,14 @@ async function loadAllTemplates() {
     await Promise.all([
         loadFile('./baikal.jpg', 'image', 'baikal-background-image'),
         loadFile('./fortuna.jpg', 'image', 'fortuna-background-image'),
-        loadFile('./atek.jpg', 'image', 'atek-background-image'),
         loadFile('./newline.jpg', 'image', 'newline-background-image'),
         loadFile('./sltk.jpg', 'image', 'sltk-background-image'),
         loadFile('./baikal-piter-doverenost.jpg', 'image', 'baikal-spb-doverenost-background-image'),
         loadFile('./baikal-piter-zayavka.jpg', 'image', 'baikal-spb-zayavka-background-image')
     ]);
     excelTemplateFile = await loadFile('./baikal_rashod.xlsx', 'excel');
+    // Шаблон АТЭК в формате docx
+    atekDocxTemplate = await loadFile('./atek.docx', 'docx');
 }
 
 // --- DOCUMENT GENERATION ---
@@ -385,14 +446,16 @@ function createFileName(prefix) {
     const dateValue = document.getElementById('input_date').value;
     const datePart = dateValue ? dateValue.split('-').reverse().join('.') : '';
     const cityPart = document.getElementById('input_city')?.value || '';
-    const enginePart = document.getElementById('input_engine_model')?.value || '';
-    // Для СЛТК и Байкал СПБ своя логика получения ФИО может быть нужна, но стандартная обычно работает
-    // Если есть input_recipient_fio_dob (для Байкал СПБ), берем его, иначе standard
+    let enginePart = document.getElementById('input_engine_model')?.value || '';
+    // Для АТЭК первая модель из динамического списка
+    if (!enginePart) {
+        const firstDvs = document.querySelector('#atek-engines-list .atek-dvs');
+        if (firstDvs) enginePart = firstDvs.value || '';
+    }
     const recipientVal = document.getElementById('input_recipient_fio_dob')?.value || document.getElementById('input_recipient_name')?.value || document.getElementById('input_recipient_data')?.value || '';
     const lastNamePart = recipientVal ? recipientVal.split(' ')[0] : '';
-    
+
     const baseName = [datePart, cityPart, enginePart, lastNamePart].filter(Boolean).join(' ');
-    // Если передан префикс (например, "Доверенность"), добавляем его в начало
     return (prefix ? prefix + ' ' : '') + baseName + '.pdf';
 }
 
@@ -424,15 +487,13 @@ async function generatePdfFor(containerId) {
 // --- Specific Generation Functions ---
 const generateBaikalPdf = () => { updateBaikalDocument(); generatePdfFor('baikal-container'); };
 const generateFortunaPdf = () => { updateFortunaDocument(); generatePdfFor('fortuna-container'); };
-const generateAtekPdf = () => { updateAtekDocument(); generatePdfFor('atek-container'); };
 const generateNewlinePdf = () => { updateNewlineDocument(); generatePdfFor('newline-container'); };
 const generateSltkPdf = () => { updateSltkDocument(); generatePdfFor('sltk-container'); };
 
 async function generateBaikalSpbSinglePdf(docType) {
-    // docType: 'doverenost' or 'zayavka'
     const containerId = docType === 'doverenost' ? 'baikal-spb-doverenost-container' : 'baikal-spb-zayavka-container';
     const container = document.getElementById(containerId);
-    
+
     const img = container.querySelector('img');
     if (!img.src || img.naturalWidth === 0) {
         alert("Шаблон не загружен.");
@@ -440,16 +501,14 @@ async function generateBaikalSpbSinglePdf(docType) {
     }
 
     showLoading('Генерация PDF...');
-    updateBaikalSpbDocument(); 
+    updateBaikalSpbDocument();
 
     try {
         await new Promise(r => setTimeout(r, 100));
         const canvas = await html2canvas(container, { scale: 2, useCORS: true });
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
         const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
-        
         pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
-        
         const prefix = docType === 'doverenost' ? 'Доверенность' : 'Заявка';
         pdf.save(createFileName(prefix));
     } catch (error) {
@@ -460,13 +519,194 @@ async function generateBaikalSpbSinglePdf(docType) {
     }
 }
 
-// --- Document Update Functions ---
+// --- ATEK: сбор данных, заполнение docx, конвертация в PDF ---
+function genitiveMonth(idx) {
+    const m = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    return m[idx];
+}
+
+function buildAtekData() {
+    // number_date в формате: 29  от «26 » июня 2026г.
+    const docNum = document.getElementById('input_doc_num').value || '';
+    const date = new Date(document.getElementById('input_date').value || new Date());
+    const day = date.getDate().toString();
+    const month = genitiveMonth(date.getMonth());
+    const year = date.getFullYear();
+    const numberDate = `${docNum}  от «${day} » ${month} ${year}г.`;
+
+    const fio = document.getElementById('input_recipient_name').value || '';
+
+    // Собираем модели
+    const rows = document.querySelectorAll('#atek-engines-list .atek-engine-row');
+    const engines = [];
+    rows.forEach(row => {
+        const dvs = (row.querySelector('.atek-dvs').value || '').trim();
+        let kol = parseInt(row.querySelector('.atek-kol').value, 10);
+        if (isNaN(kol) || kol < 1) kol = 1;
+        if (dvs) engines.push({ dvs, kol });
+    });
+
+    // Готовим данные под плейсхолдеры dvs1..3, korob1..3, kol1..3, mass1..3, fio1..3
+    const data = { number_date: numberDate };
+    for (let i = 0; i < 3; i++) {
+        const n = i + 1;
+        if (i < engines.length) {
+            const e = engines[i];
+            data['dvs' + n] = e.dvs;
+            data['korob' + n] = 'короб';
+            data['kol' + n] = String(e.kol);
+            // mass: 75 кг/шт. Если 1 -> "75 кг", если больше -> "{total}кг (75 кг/шт)"
+            if (e.kol === 1) {
+                data['mass' + n] = '75 кг';
+            } else {
+                data['mass' + n] = (e.kol * 75) + 'кг (75 кг/шт)';
+            }
+            data['fio' + n] = fio; // одно ФИО на все строки
+        } else {
+            // Пустые строки таблицы
+            data['dvs' + n] = '';
+            data['korob' + n] = '';
+            data['kol' + n] = '';
+            data['mass' + n] = '';
+            data['fio' + n] = '';
+        }
+    }
+    return { data, engines };
+}
+
+function fillAtekDocx(data) {
+    // Заполняем docx через docxtemplater. Возвращает Blob готового docx.
+    const zip = new PizZip(atekDocxTemplate.slice(0)); // копия буфера
+    const Docx = window.docxtemplater || window.Docxtemplater;
+    const doc = new Docx(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: '{{', end: '}}' },
+        // parser, как в рабочем примере: любой неизвестный/пустой тег -> '' (не роняет рендер)
+        parser: (tag) => {
+            const key = tag.trim();
+            return {
+                get: (scope) => (scope && scope[key] !== undefined && scope[key] !== null)
+                    ? String(scope[key])
+                    : ''
+            };
+        }
+    });
+    doc.render(data);
+    return doc.getZip().generate({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    });
+}
+
+async function generateAtekPdf() {
+    if (!atekDocxTemplate) {
+        alert('Шаблон atek.docx не загружен. Проверьте наличие файла в репозитории.');
+        return;
+    }
+    const { data, engines } = buildAtekData();
+    if (engines.length === 0) {
+        alert('Укажите хотя бы одну модель двигателя.');
+        return;
+    }
+
+    showLoading('Заполнение шаблона...');
+    try {
+        // 1. Заполняем docx
+        const filledBlob = fillAtekDocx(data);
+        const filledBuffer = await filledBlob.arrayBuffer();
+
+        // 2. Рендерим docx в скрытый контейнер фиксированной ширины (A4 @ ~96dpi = 794px)
+        showLoading('Рендеринг документа...');
+        const renderEl = document.getElementById('atek-docx-render');
+        renderEl.innerHTML = '';
+        renderEl.style.width = '794px';
+
+        const docxLib = window.docx || window.docxPreview;
+        await docxLib.renderAsync(filledBuffer, renderEl, null, {
+            className: 'docx',
+            inWrapper: true,
+            ignoreWidth: false,
+            ignoreHeight: false,
+            ignoreLastRenderedPageBreak: true,
+            breakPages: true,
+            experimental: true,
+            useBase64URL: true
+        });
+
+        // Ждём загрузку шрифтов и стабилизацию вёрстки
+        if (document.fonts && document.fonts.ready) {
+            try { await document.fonts.ready; } catch (e) {}
+        }
+        await new Promise(r => setTimeout(r, 400));
+
+        // 3. html2canvas -> jsPDF (A4), постранично по реальной высоте страницы
+        showLoading('Подготовка PDF...');
+        const wrapper = renderEl.querySelector('.docx-wrapper') || renderEl;
+        // Каждая отрендеренная страница docx-preview = <section class="docx">
+        const pages = wrapper.querySelectorAll('section.docx');
+
+        const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+
+        const snap = async (node) => {
+            const c = await html2canvas(node, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                windowWidth: node.scrollWidth,
+                windowHeight: node.scrollHeight
+            });
+            return c;
+        };
+
+        if (pages && pages.length > 0) {
+            // Рендерим каждую страницу docx отдельной страницей PDF
+            for (let i = 0; i < pages.length; i++) {
+                const canvas = await snap(pages[i]);
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const imgH = canvas.height * (pageW / canvas.width);
+                if (i > 0) pdf.addPage();
+                // Если страница выше A4 — вписываем по высоте, иначе по ширине
+                if (imgH <= pageH) {
+                    pdf.addImage(imgData, 'JPEG', 0, 0, pageW, imgH);
+                } else {
+                    const w = canvas.width * (pageH / canvas.height);
+                    pdf.addImage(imgData, 'JPEG', (pageW - w) / 2, 0, w, pageH);
+                }
+            }
+        } else {
+            // Фолбэк: снимаем весь wrapper и режем на страницы
+            const canvas = await snap(wrapper);
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const imgW = pageW;
+            const imgH = canvas.height * (pageW / canvas.width);
+            let remaining = imgH, position = 0;
+            while (remaining > 0) {
+                pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+                remaining -= pageH;
+                position -= pageH;
+                if (remaining > 0) pdf.addPage();
+            }
+        }
+
+        pdf.save(createFileName());
+    } catch (error) {
+        console.error('ATEK PDF error:', error);
+        alert('Ошибка при создании PDF (АТЭК): ' + (error.message || error));
+    } finally {
+        hideLoading();
+    }
+}
+
+// --- Document Update Functions (картиночные шаблоны) ---
 function updateBaikalDocument() {
     const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
     setText('b_doc_num', document.getElementById('input_doc_num').value);
     setText('b_fio', document.getElementById('input_recipient_name').value);
-    
-    // --- АВТОМАТИЧЕСКАЯ АДАПТАЦИЯ ПАСПОРТНЫХ ДАННЫХ ---
+
     const passportVal = document.getElementById('input_recipient_id').value || '';
     const passportEl = document.getElementById('b_passport');
     if (passportEl) {
@@ -498,40 +738,35 @@ function updateBaikalDocument() {
 function updateBaikalSpbDocument() {
     const docNum = document.getElementById('input_doc_num').value;
     const dateInput = document.getElementById('input_date').value;
-    // Используем новое объединенное поле
     const fioDob = document.getElementById('input_recipient_fio_dob').value;
     const idNumber = document.getElementById('input_id_number').value.replace(/\D/g, '');
     const issuedBy = document.getElementById('input_issued_by').value;
     const idDateInput = document.getElementById('input_id_date').value;
     const engine = document.getElementById('input_engine_model').value;
     const price = document.getElementById('input_amount').value;
-    
-    const idType = document.querySelector('input[name="id_type"]:checked').value; // 'passport' or 'dl'
 
-    // Форматирование дат
+    const idType = document.querySelector('input[name="id_type"]:checked').value;
+
     const formatDate = (dStr) => {
         if (!dStr) return '';
         const d = new Date(dStr);
         return d.toLocaleDateString('ru-RU');
     };
 
-    // Заполнение Доверенности
     const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
     const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
 
     setText('b_spb_d_doc_num', docNum);
     setText('b_spb_d_date', formatDate(dateInput));
-    setText('b_spb_d_fio_dob', fioDob); // Прямая вставка без форматирования
-    
-    // Номер паспорта/ВУ с префиксом. Убрали жирность (было font-weight: 700)
+    setText('b_spb_d_fio_dob', fioDob);
+
     const docPrefix = idType === 'passport' ? 'Паспорт' : 'Водительское удостоверение';
-    setHtml('b_spb_d_id_num', `<span style="font-weight: 500; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`); 
-    
+    setHtml('b_spb_d_id_num', `<span style="font-weight: 500; font-size: 8pt; position: relative; top: -0.1px;">${docPrefix}</span>: ${idNumber}`);
+
     setText('b_spb_d_issued_by', issuedBy);
-    setText('b_spb_d_issue_date', idDateInput); // Используем введенное значение напрямую
+    setText('b_spb_d_issue_date', idDateInput);
     setText('b_spb_d_engine', engine);
 
-    // Заполнение Заявки
     setText('b_spb_z_doc_num', docNum);
     setText('b_spb_z_date', formatDate(dateInput));
     setText('b_spb_z_engine', engine);
@@ -545,7 +780,7 @@ function updateFortunaDocument() {
     const priceInput = document.getElementById('input_amount');
     const price = priceInput ? parseFloat(priceInput.value) : NaN;
     const formattedPrice = !isNaN(price) ? price.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00';
-    
+
     const setText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
     setText('f_city', document.getElementById('input_city').value);
     setText('f_fio', document.getElementById('input_recipient_name').value);
@@ -553,21 +788,6 @@ function updateFortunaDocument() {
     setText('f_date', formattedDate);
     setText('f_engine', document.getElementById('input_engine_model').value);
     ['f_price1', 'f_price2', 'f_total1', 'f_total2'].forEach(id => setText(id, formattedPrice));
-}
-
-function updateAtekDocument() {
-    const fio = document.getElementById('input_recipient_name').value;
-    const dvs = document.getElementById('input_engine_model').value;
-    document.getElementById('a_fio').textContent = fio;
-    document.getElementById('a_dvs').textContent = dvs;
-
-    const date = new Date(document.getElementById('input_date').value || new Date());
-    const day = date.getDate().toString();
-    const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    const month = genitiveMonths[date.getMonth()];
-    const year = date.getFullYear();
-    const docNum = document.getElementById('input_doc_num').value;
-    document.getElementById('a_shapka').innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
 }
 
 function updateNewlineDocument() {
@@ -578,8 +798,7 @@ function updateNewlineDocument() {
 
     const date = new Date(document.getElementById('input_date').value || new Date());
     const day = date.getDate().toString();
-    const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    const month = genitiveMonths[date.getMonth()];
+    const month = genitiveMonth(date.getMonth());
     const year = date.getFullYear();
     const docNum = document.getElementById('input_doc_num').value;
     document.getElementById('nl_shapka').innerHTML = `Заявка на&nbsp;приём/<span class="custom-underline">выдачу</span>&nbsp;груза №&nbsp;${docNum}&nbsp;от&nbsp;«${day}»&nbsp;${month}&nbsp;${year}&nbsp;г.`;
@@ -590,14 +809,13 @@ function updateSltkDocument() {
     const recipientData = document.getElementById('input_recipient_data').value;
     const engine = document.getElementById('input_engine_model').value;
     const dateInput = document.getElementById('input_date').value;
-    
+
     const date = new Date(dateInput || new Date());
     const day = date.getDate().toString();
     const dd = date.getDate().toString().padStart(2, '0');
     const mm = (date.getMonth() + 1).toString().padStart(2, '0');
     const yyyy = date.getFullYear();
-    const genitiveMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    const monthName = genitiveMonths[date.getMonth()];
+    const monthName = genitiveMonth(date.getMonth());
 
     document.getElementById('s_recipient').textContent = recipientData;
     document.getElementById('s_engine').textContent = engine;
@@ -630,11 +848,11 @@ async function generateExcel() {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(excelTemplateFile);
         const worksheet = workbook.getWorksheet(1);
-        
+
         const dateValue = document.getElementById('input_date').value;
         worksheet.getCell('B2').value = dateValue ? dateValue.split('-').reverse().join('.') : '';
         worksheet.getCell('A7').value = document.getElementById('input_engine_model').value;
-        
+
         const price = parseFloat(document.getElementById('input_amount').value);
         if (!isNaN(price)) {
             worksheet.getCell('E7').value = price;
