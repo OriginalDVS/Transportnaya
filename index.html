@@ -12,7 +12,8 @@
     <!-- PizZip + docxtemplater для заполнения docx, docx-preview для рендера -->
     <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.44.0/build/docxtemplater.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx-preview/0.3.3/docx-preview.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
     <style>
         body { -webkit-tap-highlight-color: transparent; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
@@ -280,10 +281,10 @@ function showFormScreen(type) {
     } else if (type === 'atek') {
         formTitle = 'Данные для "АТЭК (Краснодар)"';
         formHTML = `
-            <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="29"></div>
+            <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю025"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
             <input type="hidden" id="input_city" value="Краснодар">
-            <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО и паспортные данные (Примечание)</label><textarea id="input_recipient_name" rows="2" class="mt-1 block w-full p-2 border rounded-md" placeholder="Зотолокин Александр Сергеевич в/у 9925 258606 ГИБДД 2309 Краснодарский Край 20.09.2022"></textarea></div>
+            <div><label for="input_recipient_name" class="block text-sm font-medium">ФИО и паспортные данные</label><textarea id="input_recipient_name" rows="2" class="mt-1 block w-full p-2 border rounded-md" placeholder="Зотолокин Александр Сергеевич в/у 9925 258606 ГИБДД 2309 Краснодарский Край 20.09.2022"></textarea></div>
 
             <div id="atek-engines-block" class="border-t pt-3">
                 <label class="block text-sm font-medium mb-2">Модели двигателей (до 3)</label>
@@ -354,7 +355,7 @@ function atekEngineRowTemplate(index) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
                 <label class="block text-xs text-gray-600">Модель двигателя</label>
-                <input type="text" class="atek-dvs mt-1 block w-full p-2 border rounded-md text-sm" placeholder="G4FC 1.6">
+                <input type="text" class="atek-dvs mt-1 block w-full p-2 border rounded-md text-sm" placeholder="G4FC">
             </div>
             <div>
                 <label class="block text-xs text-gray-600">Кол-во (шт.)</label>
@@ -622,7 +623,13 @@ async function generateAtekPdf() {
         renderEl.innerHTML = '';
         renderEl.style.width = '794px';
 
-        const docxLib = window.docx || window.docxPreview;
+        // Устойчиво находим библиотеку docx-preview (имя глобала зависит от сборки)
+        const docxLib = window.docx || window.docxPreview || window['docx-preview'] ||
+                        (window.docxjs) || null;
+        if (!docxLib || typeof docxLib.renderAsync !== 'function') {
+            throw new Error('Библиотека docx-preview не загрузилась. Проверьте подключение к интернету (CDN) и обновите страницу.');
+        }
+
         await docxLib.renderAsync(filledBuffer, renderEl, null, {
             className: 'docx',
             inWrapper: true,
