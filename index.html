@@ -591,11 +591,15 @@ function fillAtekDocx(data) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// ВСТАВЬТЕ СВОЙ КЛЮЧ CloudConvert НИЖЕ (Authorization: Bearer ...)
-// Ключ создаётся в дашборде CloudConvert -> API Keys, со scopes: task.read, task.write
-// ВНИМАНИЕ: на GitHub Pages ключ виден в исходнике страницы. Если инструмент публичный —
-// помните, что чужие могут израсходовать ваш дневной лимит (доступа к аккаунту у ключа нет).
-const CLOUDCONVERT_API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMjA0Yzc2Y2Y0YTk2NzdhODM0ODY3MzAzM2FiZGVjYjgwZDRhMzI0OGVlYjliMDFkMzU1YTlmZjU5ZWQ3MTgxZWNhMDBiZmY3MTgwMDIwNTUiLCJpYXQiOjE3ODI3OTA4OTUuNTMzNTQ5LCJuYmYiOjE3ODI3OTA4OTUuNTMzNTUxLCJleHAiOjQ5Mzg0NjQ0OTUuNTI3MTMyLCJzdWIiOiI3NjE0OTE1NSIsInNjb3BlcyI6WyJ0YXNrLnJlYWQiLCJ0YXNrLndyaXRlIl19.b03v3EMVE8UI-BvW8ATgbgpd7Dqf2ctp6HyFdQcu5pjFuGcOYF07k4eFWZfJA7uMppc2w1ZQRAGjZ1d1crXYV7CQyGM-dRGpCdS0q7DPM86FodoUgWVcpLjnn6__VLPYRzwqWeSY9drKDGht1_tt6Hngm3zKP45BlDur2UCaQPLOxsK7UTiuwFMQhzeDE0fCa6HLsQ3VsgLt6CzzlAJ3TDnx09o-5lII4VVAnR3QyIHxPgHXOOFN6q8YQlcalzrz4HnfHBl9jH7n6KjjiSkoSO37W1nLoaUZBFQLn07CcsQf3OwyjzagEDMg44X4uJPptAmURU8jTehd7hXvpLvWpeXvTO816-aNs4j5vj-vASHkfzaRBCafnHvJQeL-D5B7sH1IuuM4EWSYWocVg_0dfi4UlR4RphEGzVHzQmEoQ__X0byvlR6CE4zh5zGJf880qPHWYmLx8nIGIdma2Dmkm53sOXVXeCRRrQAOq7ImcqzQ2MiXIdwPBWvPl-eWLwbRgimS790cNEk8pTRq18AOR4NWIuPRklBn2uzK2TsgLIGob9lQrBHtuTESRxwYSieF67ji3RbCplAWaEqgn_aEF1nNFjFYVNFxvZMDdgAXAV8CWavCxsDFA6owpHQWq5C5_jJG0sJahTwRSw832VsuHeTyPfxu6PIZxpT0GY2iOv8';
+// ПУЛ КЛЮЧЕЙ CloudConvert. Код перебирает их по очереди: если у одного
+// исчерпан дневной лимит (HTTP 402 / ошибка), автоматически берётся следующий.
+// Чтобы добавить ещё ключ — просто допишите строку в массив.
+// Scopes каждого ключа: task.read, task.write.
+// ВНИМАНИЕ: на GitHub Pages ключи видны в исходнике страницы.
+const CLOUDCONVERT_API_KEYS = [
+    'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMjA0Yzc2Y2Y0YTk2NzdhODM0ODY3MzAzM2FiZGVjYjgwZDRhMzI0OGVlYjliMDFkMzU1YTlmZjU5ZWQ3MTgxZWNhMDBiZmY3MTgwMDIwNTUiLCJpYXQiOjE3ODI3OTA4OTUuNTMzNTQ5LCJuYmYiOjE3ODI3OTA4OTUuNTMzNTUxLCJleHAiOjQ5Mzg0NjQ0OTUuNTI3MTMyLCJzdWIiOiI3NjE0OTE1NSIsInNjb3BlcyI6WyJ0YXNrLnJlYWQiLCJ0YXNrLndyaXRlIl19.b03v3EMVE8UI-BvW8ATgbgpd7Dqf2ctp6HyFdQcu5pjFuGcOYF07k4eFWZfJA7uMppc2w1ZQRAGjZ1d1crXYV7CQyGM-dRGpCdS0q7DPM86FodoUgWVcpLjnn6__VLPYRzwqWeSY9drKDGht1_tt6Hngm3zKP45BlDur2UCaQPLOxsK7UTiuwFMQhzeDE0fCa6HLsQ3VsgLt6CzzlAJ3TDnx09o-5lII4VVAnR3QyIHxPgHXOOFN6q8YQlcalzrz4HnfHBl9jH7n6KjjiSkoSO37W1nLoaUZBFQLn07CcsQf3OwyjzagEDMg44X4uJPptAmURU8jTehd7hXvpLvWpeXvTO816-aNs4j5vj-vASHkfzaRBCafnHvJQeL-D5B7sH1IuuM4EWSYWocVg_0dfi4UlR4RphEGzVHzQmEoQ__X0byvlR6CE4zh5zGJf880qPHWYmLx8nIGIdma2Dmkm53sOXVXeCRRrQAOq7ImcqzQ2MiXIdwPBWvPl-eWLwbRgimS790cNEk8pTRq18AOR4NWIuPRklBn2uzK2TsgLIGob9lQrBHtuTESRxwYSieF67ji3RbCplAWaEqgn_aEF1nNFjFYVNFxvZMDdgAXAV8CWavCxsDFA6owpHQWq5C5_jJG0sJahTwRSw832VsuHeTyPfxu6PIZxpT0GY2iOv8',
+    'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMzNjNjUzOGVhNDljY2ZlN2M0N2IyMGE5YTYxNzUzMmIzNDAxYzc3MDUwMjBiODE5Mjk2NTVmNDM5Yjk2NjkzMDc2MTNmNWI5MGU0N2ViZGMiLCJpYXQiOjE3ODI3OTMwMDIuNzY5MDI0LCJuYmYiOjE3ODI3OTMwMDIuNzY5MDI1LCJleHAiOjQ5Mzg0NjY2MDIuNzYxNDk5LCJzdWIiOiI3NjE0OTM4NCIsInNjb3BlcyI6WyJ0YXNrLndyaXRlIiwidGFzay5yZWFkIl19.YYIWuyUnKVMKc9UayqVcRbZy0pTz-6QYkTGX9lGPUgQRPByrGkv9aEJN7Zla_yCYohiyNAqzV5Hna_U0pO6KmDx4HZPh25xTYwvzp7-LcTUPuWzV6je2dbM4fqc86oc9P3QGEEOVjKYsK0JYo3LrpwBNwBUqoL7UFFdnray4Wtq9KPmtCLVo0Sh2QwJfV5-NPYxZdRoRfY2q4JXeVrAoQwzTE_B1C_O9EWNjtDCyveaMpt34qXy6G7BLHNBkNWiXlXwDMQiLmTj0NKDTOkZbEIUR4scabQikppSKPgBz3vmzorYEhj6gf2aUna4fHpdah8ySYPtQXg0u90Qd8gUT6cloIlHYEeCKo87kvebluqJAQDKtmNcznBswV5ZPxEIdCWMrsDFuljTyqhEeMAjfYyRWjOApCKARAL9rtAImofzOQ0Nl2MOT3TBrkFIFOrn0TGAGHTtxJau2jV7uHeQOekDBts444hTS7uWXvKWFd9wZqxRd2WGlVLnlqk68Lw5x4iGV_UIDP6xH9dNGGmXXRd3QcQDK8vtf-_3DRQDTahwo5uVb_aZXPFkahF_Jdp-d-Ki1wEtorm54KzAQ2AU3oPFGGixX1wCigsuVZkanrlBsAGutHCwB0NdrJZ_1rvq80y8XpD8ywBVW3qCAeA9gCi1Ad2TaVn_9Lnk4gh_PVC4'
+];
 
 // Blob -> base64 (без префикса data:)
 function blobToBase64(blob) {
@@ -611,86 +615,111 @@ function blobToBase64(blob) {
     });
 }
 
-// Конвертация docx (Blob) -> pdf (Blob) через CloudConvert.
-// Схема job: import/base64 -> convert (libreoffice, docx->pdf) -> export/url.
-// Ждём готовности через синхронный эндпоинт sync.api.cloudconvert.com.
-async function cloudconvertDocxToPdf(docxBlob) {
-    if (!CLOUDCONVERT_API_KEY || CLOUDCONVERT_API_KEY.indexOf('ВСТАВ') === 0) {
-        throw new Error('Не указан ключ CloudConvert (CLOUDCONVERT_API_KEY).');
-    }
-
+// Конвертация docx (Blob) -> pdf (Blob) ОДНИМ конкретным ключом.
+// Бросает спец-ошибку с пометкой isLimit, если ключ упёрся в лимит/нет кредитов.
+async function cloudconvertOnce(apiKey, docxBlob, b64) {
     const headers = {
-        'Authorization': 'Bearer ' + CLOUDCONVERT_API_KEY,
+        'Authorization': 'Bearer ' + apiKey,
         'Content-Type': 'application/json'
     };
 
-    // 1) Создаём job
-    const b64 = await blobToBase64(docxBlob);
     const jobBody = {
         tasks: {
-            'import-1': {
-                operation: 'import/base64',
-                file: b64,
-                filename: 'atek.docx'
-            },
+            'import-1': { operation: 'import/base64', file: b64, filename: 'atek.docx' },
             'convert-1': {
-                operation: 'convert',
-                input: 'import-1',
-                input_format: 'docx',
-                output_format: 'pdf',
-                engine: 'libreoffice'
+                operation: 'convert', input: 'import-1',
+                input_format: 'docx', output_format: 'pdf', engine: 'libreoffice'
             },
             'export-1': {
-                operation: 'export/url',
-                input: 'convert-1',
-                inline: false,
-                archive_multiple_files: false
+                operation: 'export/url', input: 'convert-1',
+                inline: false, archive_multiple_files: false
             }
         }
     };
 
+    // 1) Создаём job
     const createResp = await fetch('https://api.cloudconvert.com/v2/jobs', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(jobBody)
+        method: 'POST', headers, body: JSON.stringify(jobBody)
     });
     if (!createResp.ok) {
         const t = await createResp.text();
-        throw new Error('CloudConvert: ошибка создания задачи (' + createResp.status + '). ' + t.slice(0, 300));
+        const err = new Error('Создание задачи: HTTP ' + createResp.status + '. ' + t.slice(0, 200));
+        // 402 Payment Required / 429 — кончился лимит/кредиты у этого ключа
+        err.isLimit = (createResp.status === 402 || createResp.status === 429 ||
+                       /credit|quota|limit|payment/i.test(t));
+        throw err;
     }
     const created = await createResp.json();
     const jobId = created.data.id;
 
-    // 2) Ждём завершения через синхронный эндпоинт
+    // 2) Ждём завершения (синхронный эндпоинт)
     const waitResp = await fetch('https://sync.api.cloudconvert.com/v2/jobs/' + jobId, {
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + CLOUDCONVERT_API_KEY }
+        method: 'GET', headers: { 'Authorization': 'Bearer ' + apiKey }
     });
     if (!waitResp.ok) {
         const t = await waitResp.text();
-        throw new Error('CloudConvert: ошибка ожидания (' + waitResp.status + '). ' + t.slice(0, 300));
+        const err = new Error('Ожидание: HTTP ' + waitResp.status + '. ' + t.slice(0, 200));
+        err.isLimit = (waitResp.status === 402 || waitResp.status === 429);
+        throw err;
     }
     const finished = await waitResp.json();
 
     if (finished.data.status === 'error') {
-        throw new Error('CloudConvert: задача завершилась с ошибкой. Проверьте шаблон и лимит конвертаций.');
+        // Смотрим, не лимит ли это в деталях задач
+        const tasks = finished.data.tasks || [];
+        const limitTask = tasks.find(t => /credit|quota|limit|payment/i.test(JSON.stringify(t.message || '') + JSON.stringify(t.code || '')));
+        const err = new Error('Задача завершилась с ошибкой' + (limitTask ? ' (лимит)' : '') + '.');
+        err.isLimit = !!limitTask;
+        throw err;
     }
 
-    // 3) Находим export-задачу и ссылку на PDF
+    // 3) Ссылка на готовый PDF
     const exportTask = (finished.data.tasks || []).find(
         t => t.operation === 'export/url' && t.status === 'finished'
     );
     const fileInfo = exportTask && exportTask.result && exportTask.result.files && exportTask.result.files[0];
     if (!fileInfo || !fileInfo.url) {
-        throw new Error('CloudConvert: не удалось получить ссылку на готовый PDF.');
+        throw new Error('Не удалось получить ссылку на готовый PDF.');
     }
 
     // 4) Скачиваем PDF
     const pdfResp = await fetch(fileInfo.url);
     if (!pdfResp.ok) {
-        throw new Error('CloudConvert: не удалось скачать готовый PDF (' + pdfResp.status + ').');
+        throw new Error('Не удалось скачать готовый PDF (HTTP ' + pdfResp.status + ').');
     }
     return await pdfResp.blob();
+}
+
+// Перебирает пул ключей: при ошибке лимита переходит к следующему ключу.
+async function cloudconvertDocxToPdf(docxBlob) {
+    const keys = (CLOUDCONVERT_API_KEYS || []).filter(k => k && k.length > 20);
+    if (keys.length === 0) {
+        throw new Error('Не указан ни один ключ CloudConvert (CLOUDCONVERT_API_KEYS).');
+    }
+
+    const b64 = await blobToBase64(docxBlob); // считаем один раз
+    let lastErr = null;
+
+    for (let i = 0; i < keys.length; i++) {
+        try {
+            if (keys.length > 1) showLoading('Конвертация в PDF... (ключ ' + (i + 1) + '/' + keys.length + ')');
+            return await cloudconvertOnce(keys[i], docxBlob, b64);
+        } catch (e) {
+            lastErr = e;
+            console.warn('Ключ ' + (i + 1) + ' не сработал:', e.message, '| лимит:', !!e.isLimit);
+            // Если это лимит — пробуем следующий ключ. Если другая ошибка — тоже пробуем
+            // следующий (вдруг ключ битый), но запоминаем причину.
+            if (i < keys.length - 1) continue;
+        }
+    }
+    // Все ключи исчерпаны
+    const limitHit = lastErr && lastErr.isLimit;
+    throw new Error(
+        (limitHit
+            ? 'Дневной лимит исчерпан на всех ключах. Добавьте новый ключ в CLOUDCONVERT_API_KEYS или подождите до завтра.'
+            : 'Конвертация не удалась на всех ключах.') +
+        (lastErr ? ' Последняя ошибка: ' + lastErr.message : '')
+    );
 }
 
 async function generateAtekPdf() {
