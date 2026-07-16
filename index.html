@@ -601,66 +601,147 @@ const CLOUDMERSIVE_API_KEYS = [
 ];
 
 // Конвертация docx (Blob) -> pdf (Blob) ОДНИМ конкретным ключом Cloudmersive.
+// Делает несколько попыток при сетевых обрывах (частое явление при DPI-обрывах
+// соединений к зарубежным серверам у некоторых провайдеров — обрыв не всегда
+// повторяется, повторная попытка часто проходит успешно).
 async function cloudmersiveOnce(apiKey, docxBlob) {
     const url = 'https://api.cloudmersive.com/convert/docx/to/pdf';
-    const form = new FormData();
-    form.append('inputFile', docxBlob, 'atek.docx');
+    const MAX_NETWORK_RETRIES = 4;
+    const RETRY_DELAY_MS = 1500;
 
-    let resp;
-    try {
-        resp = await fetch(url, {
-            method: 'POST',
-            headers: { 'Apikey': apiKey },
-            body: form
-        });
-    } catch (e) {
-        const err = new Error('Сетевая ошибка: ' + (e.message || e));
-        err.isLimit = false;
-        throw err;
-    }
+    let networkErr = null;
 
-    if (!resp.ok) {
-        const t = await resp.text().catch(() => '');
-        const err = new Error('HTTP ' + resp.status + '. ' + t.slice(0, 200));
-        // 401 — неверный ключ, 429 — лимит запросов
-        err.isLimit = (resp.status === 429 || resp.status === 401);
-        throw err;
-    }
+    for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt++) {
+        const form = new FormData();
+        form.append('inputFile', docxBlob, 'atek.docx');
 
-    const buf = await resp.arrayBuffer();
-    // Проверяем сигнатуру PDF (%PDF), т.к. Cloudmersive иногда отдаёт
-    // Content-Type: application/octet-stream вместо application/pdf
-    const head = new Uint8Array(buf.slice(0, 4));
-    const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46; // %PDF
-    if (!isPdf) {
-        throw new Error('Сервер вернул не PDF (возможно, ошибка конвертации).');
+        let resp;
+        try {
+            if (attempt > 1) {
+                showLoading('Конвертация в PDF... (повтор ' + attempt + '/' + MAX_NETWORK_RETRIES + ')');
+            }
+            resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Apikey': apiKey },
+                body: form
+            });
+        } catch (e) {
+            // Сетевой обрыв (Failed to fetch / ERR_CONNECTION_RESET и т.п.) — пробуем ещё раз
+            networkErr = e;
+            console.warn('Попытка ' + attempt + ' оборвалась по сети:', e.message || e);
+            if (attempt < MAX_NETWORK_RETRIES) {
+                await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+                continue;
+            }
+            const err = new Error('Сетевая ошибка после ' + MAX_NETWORK_RETRIES + ' попыток: ' + (networkErr.message || networkErr));
+            err.isLimit = false;
+            throw err;
+        }
+
+        // Запрос дошёл до сервера — дальше обычная обработка ответа (без повтора)
+        if (!resp.ok) {
+            const t = await resp.text().catch(() => '');
+            const err = new Error('HTTP ' + resp.status + '. ' + t.slice(0, 200));
+            // 401 — неверный ключ, 429 — лимит запросов
+            err.isLimit = (resp.status === 429 || resp.status === 401);
+            throw err;
+        }
+
+        const buf = await resp.arrayBuffer();
+        // Проверяем сигнатуру PDF (%PDF), т.к. Cloudmersive иногда отдаёт
+        // Content-Type: application/octet-stream вместо application/pdf
+        const head = new Uint8Array(buf.slice(0, 4));
+        const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46; // %PDF
+        if (!isPdf) {
+            throw new Error('Сервер вернул не PDF (возможно, ошибка конвертации).');
+        }
+        return new Blob([buf], { type: 'application/pdf' });
     }
-    return new Blob([buf], { type: 'application/pdf' });
 }
 
 // Перебирает пул ключей Cloudmersive: при ошибке лимита/ключа переходит к следующему.
+// Конвертация docx (Blob) -> pdf (Blob) через Convertfleet.
+// Бесплатный уровень без регистрации — пробуем без Authorization.
+// Своя же реализация ретраев на сетевые обрывы, как у Cloudmersive.
+async function convertfleetOnce(docxBlob) {
+    const url = 'https://convertfleet.com/api/convert';
+    const MAX_NETWORK_RETRIES = 3;
+    const RETRY_DELAY_MS = 1500;
+
+    for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt++) {
+        const form = new FormData();
+        form.append('file', docxBlob, 'atek.docx');
+        form.append('to', 'pdf');
+
+        let resp;
+        try {
+            if (attempt > 1) showLoading('Convertfleet: повтор ' + attempt + '/' + MAX_NETWORK_RETRIES + '...');
+            resp = await fetch(url, { method: 'POST', body: form });
+        } catch (e) {
+            console.warn('Convertfleet попытка ' + attempt + ' оборвалась по сети:', e.message || e);
+            if (attempt < MAX_NETWORK_RETRIES) {
+                await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+                continue;
+            }
+            const err = new Error('Сетевая ошибка Convertfleet: ' + (e.message || e));
+            err.isLimit = false;
+            throw err;
+        }
+
+        if (!resp.ok) {
+            const t = await resp.text().catch(() => '');
+            const err = new Error('Convertfleet HTTP ' + resp.status + '. ' + t.slice(0, 200));
+            err.isLimit = (resp.status === 401 || resp.status === 429);
+            throw err;
+        }
+
+        const buf = await resp.arrayBuffer();
+        const head = new Uint8Array(buf.slice(0, 4));
+        const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46;
+        if (!isPdf) {
+            throw new Error('Convertfleet вернул не PDF.');
+        }
+        return new Blob([buf], { type: 'application/pdf' });
+    }
+}
+
+// Пробует провайдеров конвертации по очереди: сначала все ключи Cloudmersive,
+// затем Convertfleet (без ключа). Первый успешный результат используется.
 async function cloudconvertDocxToPdf(docxBlob) {
     const keys = (CLOUDMERSIVE_API_KEYS || []).filter(k => k && k.length > 10);
-    if (keys.length === 0) {
-        throw new Error('Не указан ни один ключ Cloudmersive (CLOUDMERSIVE_API_KEYS).');
-    }
-
     let lastErr = null;
+
+    // 1) Cloudmersive (все ключи по очереди)
     for (let i = 0; i < keys.length; i++) {
         try {
-            if (keys.length > 1) showLoading('Конвертация в PDF... (ключ ' + (i + 1) + '/' + keys.length + ')');
+            if (keys.length > 1) showLoading('Cloudmersive: ключ ' + (i + 1) + '/' + keys.length + '...');
+            else showLoading('Конвертация в PDF (Cloudmersive)...');
             return await cloudmersiveOnce(keys[i], docxBlob);
         } catch (e) {
             lastErr = e;
-            console.warn('Ключ ' + (i + 1) + ' не сработал:', e.message, '| лимит:', !!e.isLimit);
-            if (i < keys.length - 1) continue;
+            console.warn('Cloudmersive ключ ' + (i + 1) + ' не сработал:', e.message, '| лимит:', !!e.isLimit);
         }
     }
+
+    // 2) Convertfleet — второе, независимое звено (другая инфраструктура)
+    try {
+        showLoading('Конвертация в PDF (Convertfleet)...');
+        return await convertfleetOnce(docxBlob);
+    } catch (e) {
+        lastErr = e;
+        console.warn('Convertfleet не сработал:', e.message);
+    }
+
     const limitHit = lastErr && lastErr.isLimit;
+    const isNetworkIssue = lastErr && !lastErr.isLimit && /Сетевая ошибка/.test(lastErr.message || '');
     throw new Error(
         (limitHit
-            ? 'Дневной лимит исчерпан на всех ключах Cloudmersive. Добавьте новый ключ или подождите до завтра.'
-            : 'Конвертация не удалась на всех ключах.') +
+            ? 'Дневной лимит исчерпан на всех доступных сервисах. Попробуйте позже.'
+            : isNetworkIssue
+                ? 'Не удалось передать файл ни на один сервер конвертации даже после нескольких попыток. ' +
+                  'Похоже, соединение обрывается на уровне провайдера. Попробуйте включить VPN и повторить,' +
+                  ' либо повторите попытку чуть позже.'
+                : 'Конвертация не удалась ни на одном из доступных сервисов.') +
         (lastErr ? ' Последняя ошибка: ' + lastErr.message : '')
     );
 }
