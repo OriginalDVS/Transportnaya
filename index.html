@@ -591,14 +591,15 @@ function fillAtekDocx(data) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// ПУЛ КЛЮЧЕЙ CloudConvert. Код перебирает их по очереди: если у одного
-// исчерпан дневной лимит (HTTP 402 / ошибка), автоматически берётся следующий.
-// Чтобы добавить ещё ключ — просто допишите строку в массив.
-// Scopes каждого ключа: task.read, task.write.
-// ВНИМАНИЕ: на GitHub Pages ключи видны в исходнике страницы.
-const CLOUDCONVERT_API_KEYS = [
-    'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMDMxN2FiNjVmMzU0MGJkYWYzN2NkNWNkMWQ5MDk5NzQyN2U5ZTc4ZjA5ZTMzZGRlMWYxNTM1MDI4ZWVjZjIyNzY5Yjk1MjMzZDUxZDU5ODciLCJpYXQiOjE3ODQxNzk4OTQuNjM3NTQxLCJuYmYiOjE3ODQxNzk4OTQuNjM3NTQyLCJleHAiOjQ5Mzk4NTM0OTQuNjMyNjk2LCJzdWIiOiI3NjE0OTE1NSIsInNjb3BlcyI6WyJ0YXNrLnJlYWQiLCJ0YXNrLndyaXRlIl19.bPoGpiDb0T5UdFn73ZbVu8FdR4sstaDDh_2_ZM72MaenHsj67l9IV80X95oRFx0MEfGdj4DZ062_zqdnTFyN2GGMkkiAyUKBP5pVfs4yPloe1Q6RqY03TZEARUZ7jfow4lqGTdzeGevN31UUnBQyO8PJmo_0acWyQpwmBGig9Fh7V5z4f9uFQuu4T55T6ctP-dQgpVe2_HExlpQOe0hL6hMaTQpasFZUZYmNFILJpR-sd1aYEsdwnDHpjBDuUN1PxUN5gtfR6D8CGOR-W0zEcvPOp4i4Ed2QVJLRcU6Dmd1VAqB2Q9k6CEY0RjVKQxoSXxbOqBd_T18zcRxg9PkmmV0T4hsUkBlh4m1ux1ssAqHfQCgDKAP2wBpiA4dViY41T0UOwFDPY4plf95klW4oqlx4qHUoFUIjKCf7Le4ZL1UzcZNUcmCIeCPzjWlB1rkuKjqhqPQS_77oMcOxJDIhx6EUngB5-oxBIj7eJ7Qt40kkEQT-qcFftZTlJB1GTA9m3hFpg1QzGJGLSCstqyuLMomOrgOq691tSXzu25066C_n3Qy1ii_TIO-Pep2vpccYIYkgGd6cQRjskEh4R2F0BW-NYN_VtiGUP6tKDVpzLEuGOgYKMaaeAdQuCmDN3z6QKLLuaus_KmnPPePRtf4u4TIvAuJnUoEMzdI62X5YmD0'
-];
+// Адрес вашего Cloudflare Worker-прокси. Сайт отправляет заполненный docx
+// СЮДА (не напрямую в CloudConvert), а воркер сам конвертирует его в PDF
+// и возвращает готовый файл. Это решает две проблемы разом:
+//  1) обходит блокировку/throttling соединений к api.cloudconvert.com
+//     у части провайдеров в России (запрос идёт через инфраструктуру
+//     Cloudflare, а не напрямую);
+//  2) прячет API-ключ CloudConvert — он лежит в переменных окружения
+//     воркера, а не в открытом исходнике этой страницы.
+const WORKER_URL = 'https://atek-pdf-proxy.stilerjava.workers.dev';
 
 // Blob -> base64 (без префикса data:)
 function blobToBase64(blob) {
@@ -614,111 +615,35 @@ function blobToBase64(blob) {
     });
 }
 
-// Конвертация docx (Blob) -> pdf (Blob) ОДНИМ конкретным ключом.
-// Бросает спец-ошибку с пометкой isLimit, если ключ упёрся в лимит/нет кредитов.
-async function cloudconvertOnce(apiKey, docxBlob, b64) {
-    const headers = {
-        'Authorization': 'Bearer ' + apiKey,
-        'Content-Type': 'application/json'
-    };
-
-    const jobBody = {
-        tasks: {
-            'import-1': { operation: 'import/base64', file: b64, filename: 'atek.docx' },
-            'convert-1': {
-                operation: 'convert', input: 'import-1',
-                input_format: 'docx', output_format: 'pdf', engine: 'libreoffice'
-            },
-            'export-1': {
-                operation: 'export/url', input: 'convert-1',
-                inline: false, archive_multiple_files: false
-            }
-        }
-    };
-
-    // 1) Создаём job
-    const createResp = await fetch('https://api.cloudconvert.com/v2/jobs', {
-        method: 'POST', headers, body: JSON.stringify(jobBody)
-    });
-    if (!createResp.ok) {
-        const t = await createResp.text();
-        const err = new Error('Создание задачи: HTTP ' + createResp.status + '. ' + t.slice(0, 200));
-        // 402 Payment Required / 429 — кончился лимит/кредиты у этого ключа
-        err.isLimit = (createResp.status === 402 || createResp.status === 429 ||
-                       /credit|quota|limit|payment/i.test(t));
-        throw err;
-    }
-    const created = await createResp.json();
-    const jobId = created.data.id;
-
-    // 2) Ждём завершения (синхронный эндпоинт)
-    const waitResp = await fetch('https://sync.api.cloudconvert.com/v2/jobs/' + jobId, {
-        method: 'GET', headers: { 'Authorization': 'Bearer ' + apiKey }
-    });
-    if (!waitResp.ok) {
-        const t = await waitResp.text();
-        const err = new Error('Ожидание: HTTP ' + waitResp.status + '. ' + t.slice(0, 200));
-        err.isLimit = (waitResp.status === 402 || waitResp.status === 429);
-        throw err;
-    }
-    const finished = await waitResp.json();
-
-    if (finished.data.status === 'error') {
-        // Смотрим, не лимит ли это в деталях задач
-        const tasks = finished.data.tasks || [];
-        const limitTask = tasks.find(t => /credit|quota|limit|payment/i.test(JSON.stringify(t.message || '') + JSON.stringify(t.code || '')));
-        const err = new Error('Задача завершилась с ошибкой' + (limitTask ? ' (лимит)' : '') + '.');
-        err.isLimit = !!limitTask;
-        throw err;
-    }
-
-    // 3) Ссылка на готовый PDF
-    const exportTask = (finished.data.tasks || []).find(
-        t => t.operation === 'export/url' && t.status === 'finished'
-    );
-    const fileInfo = exportTask && exportTask.result && exportTask.result.files && exportTask.result.files[0];
-    if (!fileInfo || !fileInfo.url) {
-        throw new Error('Не удалось получить ссылку на готовый PDF.');
-    }
-
-    // 4) Скачиваем PDF
-    const pdfResp = await fetch(fileInfo.url);
-    if (!pdfResp.ok) {
-        throw new Error('Не удалось скачать готовый PDF (HTTP ' + pdfResp.status + ').');
-    }
-    return await pdfResp.blob();
-}
-
-// Перебирает пул ключей: при ошибке лимита переходит к следующему ключу.
+// Отправляет docx (Blob) на Cloudflare Worker, получает обратно готовый PDF (Blob).
 async function cloudconvertDocxToPdf(docxBlob) {
-    const keys = (CLOUDCONVERT_API_KEYS || []).filter(k => k && k.length > 20);
-    if (keys.length === 0) {
-        throw new Error('Не указан ни один ключ CloudConvert (CLOUDCONVERT_API_KEYS).');
+    if (!WORKER_URL || WORKER_URL.indexOf('ваш-') === 0) {
+        throw new Error('Не указан адрес WORKER_URL (Cloudflare Worker-прокси).');
     }
 
-    const b64 = await blobToBase64(docxBlob); // считаем один раз
-    let lastErr = null;
+    const b64 = await blobToBase64(docxBlob);
 
-    for (let i = 0; i < keys.length; i++) {
+    let resp;
+    try {
+        resp = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64: b64, filename: 'atek.docx' })
+        });
+    } catch (e) {
+        throw new Error('Не удалось связаться с сервером конвертации (' + WORKER_URL + '). ' + (e.message || e));
+    }
+
+    if (!resp.ok) {
+        let details = '';
         try {
-            if (keys.length > 1) showLoading('Конвертация в PDF... (ключ ' + (i + 1) + '/' + keys.length + ')');
-            return await cloudconvertOnce(keys[i], docxBlob, b64);
-        } catch (e) {
-            lastErr = e;
-            console.warn('Ключ ' + (i + 1) + ' не сработал:', e.message, '| лимит:', !!e.isLimit);
-            // Если это лимит — пробуем следующий ключ. Если другая ошибка — тоже пробуем
-            // следующий (вдруг ключ битый), но запоминаем причину.
-            if (i < keys.length - 1) continue;
-        }
+            const j = await resp.json();
+            details = j.error ? (' ' + j.error) : '';
+        } catch (e) { /* ответ не JSON — игнорируем */ }
+        throw new Error('Ошибка конвертации (HTTP ' + resp.status + ').' + details);
     }
-    // Все ключи исчерпаны
-    const limitHit = lastErr && lastErr.isLimit;
-    throw new Error(
-        (limitHit
-            ? 'Дневной лимит исчерпан на всех ключах. Добавьте новый ключ в CLOUDCONVERT_API_KEYS или подождите до завтра.'
-            : 'Конвертация не удалась на всех ключах.') +
-        (lastErr ? ' Последняя ошибка: ' + lastErr.message : '')
-    );
+
+    return await resp.blob();
 }
 
 async function generateAtekPdf() {
