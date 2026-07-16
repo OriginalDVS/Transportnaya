@@ -271,6 +271,10 @@ function showFormScreen(type) {
     } else if (type === 'atek') {
         formTitle = 'Данные для "АТЭК (Краснодар)"';
         formHTML = `
+            <div class="bg-yellow-50 border-2 border-yellow-400 text-yellow-900 rounded-md p-3 text-sm font-medium">
+                ⚠️ Для скачивания PDF нужен включённый VPN (без VPN конвертация может не пройти).
+                Если VPN включить нельзя — заполните заявку вручную по шаблону.
+            </div>
             <div><label for="input_doc_num" class="block text-sm font-medium">Номер заявки</label><input type="text" id="input_doc_num" class="mt-1 block w-full p-2 border rounded-md" placeholder="Ю025"></div>
             <div><label for="input_date" class="block text-sm font-medium">Дата</label><input type="date" id="input_date" class="mt-1 block w-full p-2 border rounded-md"></div>
             <input type="hidden" id="input_city" value="Краснодар">
@@ -282,7 +286,12 @@ function showFormScreen(type) {
                 <button type="button" id="atek-add-engine" class="mt-3 inline-flex items-center gap-1 bg-teal-100 text-teal-800 font-semibold py-2 px-3 rounded-md hover:bg-teal-200 transition-colors">＋ Добавить модель</button>
             </div>
         `;
-        buttonsHTML = `<button id="generate-atek-pdf" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">Скачать Заявку (PDF)</button>`;
+        buttonsHTML = `
+            <div class="bg-yellow-50 border-2 border-yellow-400 text-yellow-900 rounded-md p-3 text-sm font-medium mb-3 text-center">
+                ⚠️ Перед скачиванием включите VPN
+            </div>
+            <button id="generate-atek-pdf" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">Скачать Заявку (PDF)</button>
+        `;
     } else if (type === 'newline') {
         formTitle = 'Данные для "Новая Линия (Махачкала)"';
         formHTML = `
@@ -591,61 +600,118 @@ function fillAtekDocx(data) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Конвертация docx (Blob) -> pdf (Blob) через Convertfleet.
-// Бесплатный уровень без регистрации — запрос без Authorization.
+// Конвертация docx (Blob) -> pdf (Blob) через CloudConvert (движок LibreOffice).
 // Делает несколько попыток при сетевых обрывах (частое явление при DPI-обрывах
-// соединений к зарубежным серверам у некоторых провайдеров — обрыв не всегда
-// повторяется, повторная попытка часто проходит успешно).
-async function convertfleetOnce(docxBlob) {
-    const url = 'https://convertfleet.com/api/convert';
-    const MAX_NETWORK_RETRIES = 4;
+// соединений к зарубежным серверам у части провайдеров в России — обрыв не
+// всегда повторяется, повторная попытка часто проходит успешно).
+const CLOUDCONVERT_API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMDMxN2FiNjVmMzU0MGJkYWYzN2NkNWNkMWQ5MDk5NzQyN2U5ZTc4ZjA5ZTMzZGRlMWYxNTM1MDI4ZWVjZjIyNzY5Yjk1MjMzZDUxZDU5ODciLCJpYXQiOjE3ODQxNzk4OTQuNjM3NTQxLCJuYmYiOjE3ODQxNzk4OTQuNjM3NTQyLCJleHAiOjQ5Mzk4NTM0OTQuNjMyNjk2LCJzdWIiOiI3NjE0OTE1NSIsInNjb3BlcyI6WyJ0YXNrLnJlYWQiLCJ0YXNrLndyaXRlIl19.bPoGpiDb0T5UdFn73ZbVu8FdR4sstaDDh_2_ZM72MaenHsj67l9IV80X95oRFx0MEfGdj4DZ062_zqdnTFyN2GGMkkiAyUKBP5pVfs4yPloe1Q6RqY03TZEARUZ7jfow4lqGTdzeGevN31UUnBQyO8PJmo_0acWyQpwmBGig9Fh7V5z4f9uFQuu4T55T6ctP-dQgpVe2_HExlpQOe0hL6hMaTQpasFZUZYmNFILJpR-sd1aYEsdwnDHpjBDuUN1PxUN5gtfR6D8CGOR-W0zEcvPOp4i4Ed2QVJLRcU6Dmd1VAqB2Q9k6CEY0RjVKQxoSXxbOqBd_T18zcRxg9PkmmV0T4hsUkBlh4m1ux1ssAqHfQCgDKAP2wBpiA4dViY41T0UOwFDPY4plf95klW4oqlx4qHUoFUIjKCf7Le4ZL1UzcZNUcmCIeCPzjWlB1rkuKjqhqPQS_77oMcOxJDIhx6EUngB5-oxBIj7eJ7Qt40kkEQT-qcFftZTlJB1GTA9m3hFpg1QzGJGLSCstqyuLMomOrgOq691tSXzu25066C_n3Qy1ii_TIO-Pep2vpccYIYkgGd6cQRjskEh4R2F0BW-NYN_VtiGUP6tKDVpzLEuGOgYKMaaeAdQuCmDN3z6QKLLuaus_KmnPPePRtf4u4TIvAuJnUoEMzdI62X5YmD0';
+
+async function cloudconvertOnce(docxBlob) {
+    const MAX_NETWORK_RETRIES = 3;
     const RETRY_DELAY_MS = 1500;
+    const headers = {
+        'Authorization': 'Bearer ' + CLOUDCONVERT_API_KEY,
+        'Content-Type': 'application/json'
+    };
+
+    // Blob -> base64
+    const b64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+            const res = r.result || '';
+            const comma = res.indexOf(',');
+            resolve(comma >= 0 ? res.slice(comma + 1) : res);
+        };
+        r.onerror = reject;
+        r.readAsDataURL(docxBlob);
+    });
 
     for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt++) {
-        const form = new FormData();
-        form.append('file', docxBlob, 'atek.docx');
-        form.append('to', 'pdf');
-
-        let resp;
         try {
             if (attempt > 1) showLoading('Конвертация в PDF... (повтор ' + attempt + '/' + MAX_NETWORK_RETRIES + ')');
             else showLoading('Конвертация в PDF...');
-            resp = await fetch(url, { method: 'POST', body: form });
+
+            const jobBody = {
+                tasks: {
+                    'import-1': { operation: 'import/base64', file: b64, filename: 'atek.docx' },
+                    'convert-1': {
+                        operation: 'convert', input: 'import-1',
+                        input_format: 'docx', output_format: 'pdf', engine: 'libreoffice'
+                    },
+                    'export-1': {
+                        operation: 'export/url', input: 'convert-1',
+                        inline: false, archive_multiple_files: false
+                    }
+                }
+            };
+
+            const createResp = await fetch('https://api.cloudconvert.com/v2/jobs', {
+                method: 'POST', headers, body: JSON.stringify(jobBody)
+            });
+            if (!createResp.ok) {
+                const t = await createResp.text().catch(() => '');
+                const err = new Error('Создание задачи: HTTP ' + createResp.status + '. ' + t.slice(0, 200));
+                err.isLimit = (createResp.status === 402 || createResp.status === 429 || /credit|quota|limit|payment/i.test(t));
+                throw err;
+            }
+            const created = await createResp.json();
+            const jobId = created.data.id;
+
+            const waitResp = await fetch('https://sync.api.cloudconvert.com/v2/jobs/' + jobId, {
+                method: 'GET', headers: { 'Authorization': 'Bearer ' + CLOUDCONVERT_API_KEY }
+            });
+            if (!waitResp.ok) {
+                const t = await waitResp.text().catch(() => '');
+                const err = new Error('Ожидание: HTTP ' + waitResp.status + '. ' + t.slice(0, 200));
+                err.isLimit = (waitResp.status === 402 || waitResp.status === 429);
+                throw err;
+            }
+            const finished = await waitResp.json();
+
+            if (finished.data.status === 'error') {
+                const tasks = finished.data.tasks || [];
+                const limitTask = tasks.find(t => /credit|quota|limit|payment/i.test(JSON.stringify(t.message || '') + JSON.stringify(t.code || '')));
+                const err = new Error('Задача завершилась с ошибкой' + (limitTask ? ' (лимит)' : '') + '.');
+                err.isLimit = !!limitTask;
+                throw err;
+            }
+
+            const exportTask = (finished.data.tasks || []).find(t => t.operation === 'export/url' && t.status === 'finished');
+            const fileInfo = exportTask && exportTask.result && exportTask.result.files && exportTask.result.files[0];
+            if (!fileInfo || !fileInfo.url) {
+                throw new Error('Не удалось получить ссылку на готовый PDF.');
+            }
+
+            const pdfResp = await fetch(fileInfo.url);
+            if (!pdfResp.ok) {
+                throw new Error('Не удалось скачать готовый PDF (HTTP ' + pdfResp.status + ').');
+            }
+            return await pdfResp.blob();
+
         } catch (e) {
-            console.warn('Convertfleet попытка ' + attempt + ' оборвалась по сети:', e.message || e);
-            if (attempt < MAX_NETWORK_RETRIES) {
+            const isNetwork = !e.isLimit && /Failed to fetch|NetworkError|ERR_CONNECTION/i.test(e.message || '');
+            console.warn('CloudConvert попытка ' + attempt + ' не удалась:', e.message || e, '| сеть:', isNetwork, '| лимит:', !!e.isLimit);
+            if (isNetwork && attempt < MAX_NETWORK_RETRIES) {
                 await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
                 continue;
             }
-            const err = new Error('Сетевая ошибка после ' + MAX_NETWORK_RETRIES + ' попыток: ' + (e.message || e));
-            err.isLimit = false;
-            throw err;
+            if (isNetwork) {
+                const err = new Error('Сетевая ошибка после ' + MAX_NETWORK_RETRIES + ' попыток: ' + (e.message || e));
+                err.isLimit = false;
+                throw err;
+            }
+            throw e;
         }
-
-        if (!resp.ok) {
-            const t = await resp.text().catch(() => '');
-            const err = new Error('HTTP ' + resp.status + '. ' + t.slice(0, 200));
-            err.isLimit = (resp.status === 401 || resp.status === 429);
-            throw err;
-        }
-
-        const buf = await resp.arrayBuffer();
-        const head = new Uint8Array(buf.slice(0, 4));
-        const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46; // %PDF
-        if (!isPdf) {
-            throw new Error('Сервер вернул не PDF (возможно, ошибка конвертации).');
-        }
-        return new Blob([buf], { type: 'application/pdf' });
     }
 }
 
 async function cloudconvertDocxToPdf(docxBlob) {
     let lastErr = null;
     try {
-        return await convertfleetOnce(docxBlob);
+        return await cloudconvertOnce(docxBlob);
     } catch (e) {
         lastErr = e;
-        console.warn('Convertfleet не сработал:', e.message, '| лимит:', !!e.isLimit);
+        console.warn('CloudConvert не сработал:', e.message, '| лимит:', !!e.isLimit);
     }
 
     const limitHit = lastErr && lastErr.isLimit;
@@ -678,7 +744,7 @@ async function generateAtekPdf() {
         // 1. Заполняем docx локально (docxtemplater)
         const filledBlob = fillAtekDocx(data);
 
-        // 2. Конвертируем docx -> pdf через Convertfleet
+        // 2. Конвертируем docx -> pdf через CloudConvert
         showLoading('Конвертация в PDF...');
         const pdfBlob = await cloudconvertDocxToPdf(filledBlob);
 
