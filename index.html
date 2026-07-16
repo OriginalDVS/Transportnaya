@@ -591,81 +591,14 @@ function fillAtekDocx(data) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// ПУЛ КЛЮЧЕЙ Cloudmersive. Бесплатный тариф — 800 конвертаций в день на ключ,
-// без карты. Сайт отправляет заполненный docx напрямую сюда (multipart/form-data),
-// сервис конвертирует его в PDF (движок с высокой точностью) и возвращает файл.
-// Чтобы добавить ещё ключ — допишите строку в массив.
-// ВНИМАНИЕ: на GitHub Pages ключи видны в исходнике страницы.
-const CLOUDMERSIVE_API_KEYS = [
-    '0838f614-0fca-46d6-bef8-eed07baed38f'
-];
-
-// Конвертация docx (Blob) -> pdf (Blob) ОДНИМ конкретным ключом Cloudmersive.
+// Конвертация docx (Blob) -> pdf (Blob) через Convertfleet.
+// Бесплатный уровень без регистрации — запрос без Authorization.
 // Делает несколько попыток при сетевых обрывах (частое явление при DPI-обрывах
 // соединений к зарубежным серверам у некоторых провайдеров — обрыв не всегда
 // повторяется, повторная попытка часто проходит успешно).
-async function cloudmersiveOnce(apiKey, docxBlob) {
-    const url = 'https://api.cloudmersive.com/convert/docx/to/pdf';
-    const MAX_NETWORK_RETRIES = 4;
-    const RETRY_DELAY_MS = 1500;
-
-    let networkErr = null;
-
-    for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt++) {
-        const form = new FormData();
-        form.append('inputFile', docxBlob, 'atek.docx');
-
-        let resp;
-        try {
-            if (attempt > 1) {
-                showLoading('Конвертация в PDF... (повтор ' + attempt + '/' + MAX_NETWORK_RETRIES + ')');
-            }
-            resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Apikey': apiKey },
-                body: form
-            });
-        } catch (e) {
-            // Сетевой обрыв (Failed to fetch / ERR_CONNECTION_RESET и т.п.) — пробуем ещё раз
-            networkErr = e;
-            console.warn('Попытка ' + attempt + ' оборвалась по сети:', e.message || e);
-            if (attempt < MAX_NETWORK_RETRIES) {
-                await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-                continue;
-            }
-            const err = new Error('Сетевая ошибка после ' + MAX_NETWORK_RETRIES + ' попыток: ' + (networkErr.message || networkErr));
-            err.isLimit = false;
-            throw err;
-        }
-
-        // Запрос дошёл до сервера — дальше обычная обработка ответа (без повтора)
-        if (!resp.ok) {
-            const t = await resp.text().catch(() => '');
-            const err = new Error('HTTP ' + resp.status + '. ' + t.slice(0, 200));
-            // 401 — неверный ключ, 429 — лимит запросов
-            err.isLimit = (resp.status === 429 || resp.status === 401);
-            throw err;
-        }
-
-        const buf = await resp.arrayBuffer();
-        // Проверяем сигнатуру PDF (%PDF), т.к. Cloudmersive иногда отдаёт
-        // Content-Type: application/octet-stream вместо application/pdf
-        const head = new Uint8Array(buf.slice(0, 4));
-        const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46; // %PDF
-        if (!isPdf) {
-            throw new Error('Сервер вернул не PDF (возможно, ошибка конвертации).');
-        }
-        return new Blob([buf], { type: 'application/pdf' });
-    }
-}
-
-// Перебирает пул ключей Cloudmersive: при ошибке лимита/ключа переходит к следующему.
-// Конвертация docx (Blob) -> pdf (Blob) через Convertfleet.
-// Бесплатный уровень без регистрации — пробуем без Authorization.
-// Своя же реализация ретраев на сетевые обрывы, как у Cloudmersive.
 async function convertfleetOnce(docxBlob) {
     const url = 'https://convertfleet.com/api/convert';
-    const MAX_NETWORK_RETRIES = 3;
+    const MAX_NETWORK_RETRIES = 4;
     const RETRY_DELAY_MS = 1500;
 
     for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt++) {
@@ -675,7 +608,8 @@ async function convertfleetOnce(docxBlob) {
 
         let resp;
         try {
-            if (attempt > 1) showLoading('Convertfleet: повтор ' + attempt + '/' + MAX_NETWORK_RETRIES + '...');
+            if (attempt > 1) showLoading('Конвертация в PDF... (повтор ' + attempt + '/' + MAX_NETWORK_RETRIES + ')');
+            else showLoading('Конвертация в PDF...');
             resp = await fetch(url, { method: 'POST', body: form });
         } catch (e) {
             console.warn('Convertfleet попытка ' + attempt + ' оборвалась по сети:', e.message || e);
@@ -683,53 +617,35 @@ async function convertfleetOnce(docxBlob) {
                 await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
                 continue;
             }
-            const err = new Error('Сетевая ошибка Convertfleet: ' + (e.message || e));
+            const err = new Error('Сетевая ошибка после ' + MAX_NETWORK_RETRIES + ' попыток: ' + (e.message || e));
             err.isLimit = false;
             throw err;
         }
 
         if (!resp.ok) {
             const t = await resp.text().catch(() => '');
-            const err = new Error('Convertfleet HTTP ' + resp.status + '. ' + t.slice(0, 200));
+            const err = new Error('HTTP ' + resp.status + '. ' + t.slice(0, 200));
             err.isLimit = (resp.status === 401 || resp.status === 429);
             throw err;
         }
 
         const buf = await resp.arrayBuffer();
         const head = new Uint8Array(buf.slice(0, 4));
-        const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46;
+        const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46; // %PDF
         if (!isPdf) {
-            throw new Error('Convertfleet вернул не PDF.');
+            throw new Error('Сервер вернул не PDF (возможно, ошибка конвертации).');
         }
         return new Blob([buf], { type: 'application/pdf' });
     }
 }
 
-// Пробует провайдеров конвертации по очереди: сначала все ключи Cloudmersive,
-// затем Convertfleet (без ключа). Первый успешный результат используется.
 async function cloudconvertDocxToPdf(docxBlob) {
-    const keys = (CLOUDMERSIVE_API_KEYS || []).filter(k => k && k.length > 10);
     let lastErr = null;
-
-    // 1) Cloudmersive (все ключи по очереди)
-    for (let i = 0; i < keys.length; i++) {
-        try {
-            if (keys.length > 1) showLoading('Cloudmersive: ключ ' + (i + 1) + '/' + keys.length + '...');
-            else showLoading('Конвертация в PDF (Cloudmersive)...');
-            return await cloudmersiveOnce(keys[i], docxBlob);
-        } catch (e) {
-            lastErr = e;
-            console.warn('Cloudmersive ключ ' + (i + 1) + ' не сработал:', e.message, '| лимит:', !!e.isLimit);
-        }
-    }
-
-    // 2) Convertfleet — второе, независимое звено (другая инфраструктура)
     try {
-        showLoading('Конвертация в PDF (Convertfleet)...');
         return await convertfleetOnce(docxBlob);
     } catch (e) {
         lastErr = e;
-        console.warn('Convertfleet не сработал:', e.message);
+        console.warn('Convertfleet не сработал:', e.message, '| лимит:', !!e.isLimit);
     }
 
     const limitHit = lastErr && lastErr.isLimit;
@@ -762,7 +678,7 @@ async function generateAtekPdf() {
         // 1. Заполняем docx локально (docxtemplater)
         const filledBlob = fillAtekDocx(data);
 
-        // 2. Конвертируем docx -> pdf через Cloudmersive
+        // 2. Конвертируем docx -> pdf через Convertfleet
         showLoading('Конвертация в PDF...');
         const pdfBlob = await cloudconvertDocxToPdf(filledBlob);
 
