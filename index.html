@@ -591,59 +591,78 @@ function fillAtekDocx(data) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Адрес вашего Cloudflare Worker-прокси. Сайт отправляет заполненный docx
-// СЮДА (не напрямую в CloudConvert), а воркер сам конвертирует его в PDF
-// и возвращает готовый файл. Это решает две проблемы разом:
-//  1) обходит блокировку/throttling соединений к api.cloudconvert.com
-//     у части провайдеров в России (запрос идёт через инфраструктуру
-//     Cloudflare, а не напрямую);
-//  2) прячет API-ключ CloudConvert — он лежит в переменных окружения
-//     воркера, а не в открытом исходнике этой страницы.
-const WORKER_URL = 'https://atek-pdf-proxy.stilerjava.workers.dev';
+// ПУЛ КЛЮЧЕЙ Cloudmersive. Бесплатный тариф — 800 конвертаций в день на ключ,
+// без карты. Сайт отправляет заполненный docx напрямую сюда (multipart/form-data),
+// сервис конвертирует его в PDF (движок с высокой точностью) и возвращает файл.
+// Чтобы добавить ещё ключ — допишите строку в массив.
+// ВНИМАНИЕ: на GitHub Pages ключи видны в исходнике страницы.
+const CLOUDMERSIVE_API_KEYS = [
+    '0838f614-0fca-46d6-bef8-eed07baed38f'
+];
 
-// Blob -> base64 (без префикса data:)
-function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => {
-            const res = r.result || '';
-            const comma = res.indexOf(',');
-            resolve(comma >= 0 ? res.slice(comma + 1) : res);
-        };
-        r.onerror = reject;
-        r.readAsDataURL(blob);
-    });
-}
-
-// Отправляет docx (Blob) на Cloudflare Worker, получает обратно готовый PDF (Blob).
-async function cloudconvertDocxToPdf(docxBlob) {
-    if (!WORKER_URL || WORKER_URL.indexOf('ваш-') === 0) {
-        throw new Error('Не указан адрес WORKER_URL (Cloudflare Worker-прокси).');
-    }
-
-    const b64 = await blobToBase64(docxBlob);
+// Конвертация docx (Blob) -> pdf (Blob) ОДНИМ конкретным ключом Cloudmersive.
+async function cloudmersiveOnce(apiKey, docxBlob) {
+    const url = 'https://api.cloudmersive.com/convert/docx/to/pdf';
+    const form = new FormData();
+    form.append('inputFile', docxBlob, 'atek.docx');
 
     let resp;
     try {
-        resp = await fetch(WORKER_URL, {
+        resp = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base64: b64, filename: 'atek.docx' })
+            headers: { 'Apikey': apiKey },
+            body: form
         });
     } catch (e) {
-        throw new Error('Не удалось связаться с сервером конвертации (' + WORKER_URL + '). ' + (e.message || e));
+        const err = new Error('Сетевая ошибка: ' + (e.message || e));
+        err.isLimit = false;
+        throw err;
     }
 
     if (!resp.ok) {
-        let details = '';
-        try {
-            const j = await resp.json();
-            details = j.error ? (' ' + j.error) : '';
-        } catch (e) { /* ответ не JSON — игнорируем */ }
-        throw new Error('Ошибка конвертации (HTTP ' + resp.status + ').' + details);
+        const t = await resp.text().catch(() => '');
+        const err = new Error('HTTP ' + resp.status + '. ' + t.slice(0, 200));
+        // 401 — неверный ключ, 429 — лимит запросов
+        err.isLimit = (resp.status === 429 || resp.status === 401);
+        throw err;
     }
 
-    return await resp.blob();
+    const buf = await resp.arrayBuffer();
+    // Проверяем сигнатуру PDF (%PDF), т.к. Cloudmersive иногда отдаёт
+    // Content-Type: application/octet-stream вместо application/pdf
+    const head = new Uint8Array(buf.slice(0, 4));
+    const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46; // %PDF
+    if (!isPdf) {
+        throw new Error('Сервер вернул не PDF (возможно, ошибка конвертации).');
+    }
+    return new Blob([buf], { type: 'application/pdf' });
+}
+
+// Перебирает пул ключей Cloudmersive: при ошибке лимита/ключа переходит к следующему.
+async function cloudconvertDocxToPdf(docxBlob) {
+    const keys = (CLOUDMERSIVE_API_KEYS || []).filter(k => k && k.length > 10);
+    if (keys.length === 0) {
+        throw new Error('Не указан ни один ключ Cloudmersive (CLOUDMERSIVE_API_KEYS).');
+    }
+
+    let lastErr = null;
+    for (let i = 0; i < keys.length; i++) {
+        try {
+            if (keys.length > 1) showLoading('Конвертация в PDF... (ключ ' + (i + 1) + '/' + keys.length + ')');
+            return await cloudmersiveOnce(keys[i], docxBlob);
+        } catch (e) {
+            lastErr = e;
+            console.warn('Ключ ' + (i + 1) + ' не сработал:', e.message, '| лимит:', !!e.isLimit);
+            if (i < keys.length - 1) continue;
+        }
+    }
+    const limitHit = lastErr && lastErr.isLimit;
+    throw new Error(
+        (limitHit
+            ? 'Дневной лимит исчерпан на всех ключах Cloudmersive. Добавьте новый ключ или подождите до завтра.'
+            : 'Конвертация не удалась на всех ключах.') +
+        (lastErr ? ' Последняя ошибка: ' + lastErr.message : '')
+    );
 }
 
 async function generateAtekPdf() {
@@ -662,7 +681,7 @@ async function generateAtekPdf() {
         // 1. Заполняем docx локально (docxtemplater)
         const filledBlob = fillAtekDocx(data);
 
-        // 2. Конвертируем docx -> pdf через CloudConvert (движок LibreOffice)
+        // 2. Конвертируем docx -> pdf через Cloudmersive
         showLoading('Конвертация в PDF...');
         const pdfBlob = await cloudconvertDocxToPdf(filledBlob);
 
